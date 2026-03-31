@@ -1,50 +1,63 @@
-# 🏢 Oficina Virtual / Agencia Multi-Agente
+# 🏢 Oficina Virtual / Agencia Multi-Agente (AICompany)
 
-Una arquitectura de microservicios orientada a eventos para una oficina virtual inteligente con agentes IA colaborativos.
+Una arquitectura de microservicios orientada a eventos para una oficina virtual inteligente con agentes IA colaborativos. Este proyecto implementa un ecosistema donde múltiples agentes de IA trabajan juntos, coordinados por un gateway central y visualizados en un dashboard en tiempo real.
+
+## 🌟 Características
+
+- **Arquitectura de Microservicios:** Servicios desacoplados en Go, Python y Next.js.
+- **Comunicación en Tiempo Real:** WebSockets para actualizaciones instantáneas del estado de los agentes.
+- **Orquestación Multi-Agente:** Utiliza CrewAI para la lógica de colaboración entre agentes.
+- **Event-Driven:** Comunicación asíncrona mediante Redis.
+- **Despliegue con Docker:** Configuración completa para entorno de desarrollo local.
 
 ## 📋 Estructura del Proyecto (Monorepo)
 
-```
+```bash
 .
 ├── frontend/          # Next.js App Router (UI Dashboard)
 ├── gateway/           # Golang + Fiber/WebSockets (Orquestador)
 ├── ai-worker/         # Python + FastAPI + CrewAI (Lógica Multi-Agente)
 ├── docker-compose.yml # Orquestación completa
-└── MASTER_PLAN.md     # Documento de arquitectura
+└── MASTER_PLAN.md     # Documento de arquitectura detallada
 ```
 
 ## 🚀 Servicios Orquestados
 
 | Servicio | Puerto | Tecnología | Propósito |
 |----------|--------|-----------|----------|
-| **Redis** | 6379 | Redis Alpine | Message Broker |
-| **Gateway** | 8000 | Go + Fiber | HTTP API + WebSockets |
-| **AI Worker** | 8001 | Python + FastAPI | Lógica Multi-Agente |
-| **Frontend** | 3000 | Next.js | UI Dashboard |
+| **Redis** | 6379 | Redis Alpine | Message Broker (Pub/Sub) |
+| **Gateway** | 8000 | Go + Fiber | HTTP API + WebSockets Relays |
+| **AI Worker** | 8001 | Python + FastAPI | Motor de Agentes CrewAI |
+| **Frontend** | 3000 | Next.js | Panel de Control y Visualización |
 
-## 🏗️ Arquitectura
+## 🏗️ Flujo de Datos
 
+1. **Frontend** envía una tarea vía HTTP POST al **Gateway**.
+2. **Gateway** delega la ejecución al **AI Worker**.
+3. **AI Worker (Python)** procesa la tarea con múltiples agentes y publica eventos en **Redis**.
+4. **Gateway** escucha los eventos de Redis y los retransmite por **WebSockets**.
+5. **Frontend** recibe las actualizaciones en vivo y actualiza la UI.
+
+## 🛠️ Instalación y Uso
+
+### Requisitos previos
+- Docker & Docker Compose
+- Node.js (opcional, para desarrollo local del frontend)
+- Go (opcional, para desarrollo local del gateway)
+- Python 3.10+ (opcional, para desarrollo local del worker)
+
+### Ejecución rápida con Docker
+```bash
+docker-compose up --build
 ```
-Frontend (Next.js)
-    ↓ HTTP POST (Tareas)
-Gateway (Go WebSocket)
-    ↓ HTTP POST
-AI Worker (Python CrewAI)
-    ↓ Publish Events
-Redis Channel (agency_events)
-    ↑ Subscribe
-Gateway WebSocket
-    ↓ Broadcast
-Frontend (Live Feed)
-```
+Accede a `http://localhost:3000` para ver el dashboard.
 
-## 📝 Fases de Desarrollo
+## 📝 Estado del Proyecto
 
-- **FASE 1** ✅: Estructura base + docker-compose.yml
-- **FASE 2**: AI Worker (CrewAI + Event Streaming)
-- **FASE 3**: Gateway (HTTP + WebSockets)
-- **FASE 4**: Frontend (Dashboard + Live Feed)
+- [x] **FASE 1**: Estructura base + Docker Orchestration.
+- [ ] **FASE 2**: Implementación detallada de AI Worker (CrewAI + Event Streaming).
+- [ ] **FASE 3**: Robustecimiento del Gateway (Gestión de estados + WS).
+- [ ] **FASE 4**: UI/UX Dashboard (Framer Motion + Live Feed).
 
-## 🎯 Próximos Pasos
-
-Espera instrucciones para proceder a la **FASE 2: AI WORKER**.
+---
+*Desarrollado con ❤️ por Santi.*
