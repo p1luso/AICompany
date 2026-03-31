@@ -1,0 +1,203 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── PIXEL ART BASE ─────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+html, body {
+  background-color: #1a1a2e;
+  color: #e2e8f0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ─── PIXEL SCROLLBAR ─────────────────────────── */
+::-webkit-scrollbar        { width: 8px; }
+::-webkit-scrollbar-track  { background: #0f3460; }
+::-webkit-scrollbar-thumb  { background: #ffd700; border: 2px solid #0f3460; }
+
+/* ─── CRT SCANLINE OVERLAY ────────────────────── */
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.07) 2px,
+    rgba(0, 0, 0, 0.07) 4px
+  );
+}
+
+.crt-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 60%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+}
+
+/* ─── PIXEL BORDER UTILITIES ──────────────────── */
+.pixel-border {
+  border: 4px solid #ffd700;
+  box-shadow: 4px 4px 0 #b8860b;
+}
+
+.pixel-border-blue {
+  border: 4px solid #4fc3f7;
+  box-shadow: 4px 4px 0 #0277bd;
+}
+
+.pixel-border-red {
+  border: 4px solid #ef5350;
+  box-shadow: 4px 4px 0 #b71c1c;
+}
+
+.pixel-border-green {
+  border: 4px solid #81c784;
+  box-shadow: 4px 4px 0 #2e7d32;
+}
+
+/* ─── PIXEL BUTTON ────────────────────────────── */
+.pixel-btn {
+  font-family: 'Press Start 2P', monospace;
+  border: 4px solid #ffd700;
+  background: #0f3460;
+  color: #ffd700;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: transform 0.1s;
+  box-shadow: 4px 4px 0 #b8860b;
+}
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 #b8860b;
+}
+
+/* ─── TEXT EFFECTS ────────────────────────────── */
+.text-glow-gold   { text-shadow: 0 0 8px #ffd700, 0 0 16px #ffd700; }
+.text-glow-green  { text-shadow: 0 0 8px #39ff14, 0 0 16px #39ff14; }
+.text-glow-blue   { text-shadow: 0 0 8px #4fc3f7, 0 0 16px #4fc3f7; }
+
+/* ─── PIXEL PANEL ─────────────────────────────── */
+.pixel-panel {
+  background: #16213e;
+  border: 4px solid #0f3460;
+  border-top: 4px solid #1a3a6e;
+  border-left: 4px solid #1a3a6e;
+}
+
+/* ─── FLOOR TILE PATTERN ──────────────────────── */
+.floor-tiles {
+  background-image: repeating-conic-gradient(#c8a96e 0% 25%, #b8996e 0% 50%);
+  background-size: 16px 16px;
+}
+
+.floor-tiles-dark {
+  background-image: repeating-conic-gradient(#2a2a2a 0% 25%, #1e1e1e 0% 50%);
+  background-size: 16px 16px;
+}
+
+/* ─── SPEECH BUBBLE ───────────────────────────── */
+.speech-bubble {
+  position: absolute;
+  background: #fff;
+  border: 3px solid #333;
+  padding: 4px 8px;
+  border-radius: 0;
+  white-space: nowrap;
+  font-size: 16px;
+}
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #333;
+}
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #fff;
+  z-index: 1;
+}
+
+/* ─── SERVER RACK LIGHTS ──────────────────────── */
+.server-light-green { animation: serverBlink 1.2s step-end infinite; }
+.server-light-red   { animation: serverBlink 0.7s step-end infinite; }
+.server-light-blue  { animation: serverBlink 2s step-end infinite; }
+
+@keyframes serverBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.1; }
+}
+
+/* ─── TERMINAL CURSOR ─────────────────────────── */
+.terminal-cursor::after {
+  content: '█';
+  animation: cursorBlink 1s step-end infinite;
+  color: #00ff41;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* ─── WALKING ANIMATION ───────────────────────── */
+@keyframes pixelWalkCycle {
+  0%   { transform: translateY(0); }
+  25%  { transform: translateY(-2px); }
+  50%  { transform: translateY(0); }
+  75%  { transform: translateY(-2px); }
+  100% { transform: translateY(0); }
+}
+
+.walking {
+  animation: pixelWalkCycle 0.4s steps(4) infinite;
+}
+
+/* ─── BREATHING IDLE ──────────────────────────── */
+@keyframes pixelBreathe {
+  0%, 100% { transform: translateY(0px) scaleY(1); }
+  50%      { transform: translateY(-2px) scaleY(0.98); }
+}
+
+.idle {
+  animation: pixelBreathe 2.5s ease-in-out infinite;
+}
+
+/* ─── REPORT PAPER DROP ───────────────────────── */
+@keyframes reportDrop {
+  0%   { opacity: 0; transform: translateY(-20px) rotate(-5deg); }
+  60%  { opacity: 1; transform: translateY(4px) rotate(2deg); }
+  100% { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+.report-drop {
+  animation: reportDrop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}

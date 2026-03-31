@@ -1,0 +1,141 @@
+"use client";
+
+/* ─── DESK (pixel art top view) ──────────────── */
+export function Desk({ color = "#a0522d" }: { color?: string }) {
+  return (
+    <svg viewBox="0 0 20 14" width={60} height={42} style={{ imageRendering: "pixelated" }}>
+      {/* Desktop surface */}
+      <rect x="0" y="2" width="20" height="10" fill={color} />
+      {/* Top edge (highlight) */}
+      <rect x="0" y="2" width="20" height="2" fill="#c47a3a" />
+      {/* Monitor */}
+      <rect x="6" y="0" width="8" height="5" fill="#1565C0" />
+      <rect x="7" y="1" width="6" height="3" fill="#4fc3f7" opacity="0.8" />
+      <rect x="9" y="5" width="2" height="2" fill="#616161" />
+      {/* Keyboard */}
+      <rect x="5" y="7" width="10" height="3" fill="#424242" />
+      <rect x="6" y="8" width="1" height="1" fill="#616161" />
+      <rect x="8" y="8" width="1" height="1" fill="#616161" />
+      <rect x="10" y="8" width="1" height="1" fill="#616161" />
+      <rect x="12" y="8" width="1" height="1" fill="#616161" />
+      {/* Legs */}
+      <rect x="1" y="12" width="2" height="2" fill="#8B6914" />
+      <rect x="17" y="12" width="2" height="2" fill="#8B6914" />
+    </svg>
+  );
+}
+
+/* ─── CONFERENCE TABLE ────────────────────────── */
+export function ConferenceTable() {
+  return (
+    <svg viewBox="0 0 48 28" width={144} height={84} style={{ imageRendering: "pixelated" }}>
+      {/* Table surface */}
+      <rect x="2" y="4" width="44" height="20" fill="#8B6914" />
+      {/* Top highlight */}
+      <rect x="2" y="4" width="44" height="3" fill="#C8A96E" />
+      {/* Left highlight */}
+      <rect x="2" y="4" width="3" height="20" fill="#C8A96E" />
+      {/* Chairs */}
+      <rect x="6"  y="0"  width="6" height="4" fill="#5D4037" />
+      <rect x="18" y="0"  width="6" height="4" fill="#5D4037" />
+      <rect x="30" y="0"  width="6" height="4" fill="#5D4037" />
+      <rect x="6"  y="24" width="6" height="4" fill="#5D4037" />
+      <rect x="18" y="24" width="6" height="4" fill="#5D4037" />
+      <rect x="30" y="24" width="6" height="4" fill="#5D4037" />
+      {/* Legs */}
+      <rect x="2"  y="22" width="3" height="4" fill="#6D4C41" />
+      <rect x="43" y="22" width="3" height="4" fill="#6D4C41" />
+    </svg>
+  );
+}
+
+/* ─── PAPER/REPORT ICON ───────────────────────── */
+export function ReportIcon({ visible }: { visible: boolean }) {
+  if (!visible) return null;
+  return (
+    <div className="report-drop absolute" style={{ top: "30px", left: "50%", transform: "translateX(-50%)" }}>
+      <svg viewBox="0 0 10 12" width={30} height={36} style={{ imageRendering: "pixelated" }}>
+        <rect x="0" y="0" width="10" height="12" fill="#FFFDE7" />
+        <rect x="0" y="0" width="10" height="1" fill="#F9A825" />
+        <rect x="1" y="3" width="8" height="1" fill="#9E9E9E" />
+        <rect x="1" y="5" width="8" height="1" fill="#9E9E9E" />
+        <rect x="1" y="7" width="6" height="1" fill="#9E9E9E" />
+        <rect x="1" y="9" width="4" height="1" fill="#9E9E9E" />
+      </svg>
+    </div>
+  );
+}
+
+/* ─── BOOKCASE ────────────────────────────────── */
+export function Bookcase() {
+  return (
+    <svg viewBox="0 0 14 18" width={42} height={54} style={{ imageRendering: "pixelated" }}>
+      {/* Frame */}
+      <rect x="0" y="0" width="14" height="18" fill="#5D4037" />
+      {/* Shelves */}
+      <rect x="1" y="6"  width="12" height="1" fill="#3E2723" />
+      <rect x="1" y="12" width="12" height="1" fill="#3E2723" />
+      {/* Books row 1 */}
+      <rect x="1" y="1" width="2" height="5" fill="#E53935" />
+      <rect x="3" y="1" width="2" height="5" fill="#1E88E5" />
+      <rect x="5" y="1" width="3" height="5" fill="#43A047" />
+      <rect x="8" y="1" width="2" height="5" fill="#FB8C00" />
+      <rect x="10" y="1" width="3" height="5" fill="#8E24AA" />
+      {/* Books row 2 */}
+      <rect x="1" y="7" width="3" height="5" fill="#00ACC1" />
+      <rect x="4" y="7" width="2" height="5" fill="#F4511E" />
+      <rect x="6" y="7" width="2" height="5" fill="#FFB300" />
+      <rect x="8" y="7" width="3" height="5" fill="#3949AB" />
+      <rect x="11" y="7" width="2" height="5" fill="#00897B" />
+      {/* Row 3 */}
+      <rect x="1" y="13" width="4" height="4" fill="#D81B60" />
+      <rect x="5" y="13" width="2" height="4" fill="#6D4C41" />
+      <rect x="7" y="13" width="3" height="4" fill="#039BE5" />
+      <rect x="10" y="13" width="3" height="4" fill="#558B2F" />
+    </svg>
+  );
+}
+
+/* ─── SERVER RACK ─────────────────────────────── */
+export function ServerRack() {
+  return (
+    <svg viewBox="0 0 16 24" width={48} height={72} style={{ imageRendering: "pixelated" }}>
+      {/* Cabinet */}
+      <rect x="0" y="0" width="16" height="24" fill="#212121" />
+      <rect x="1" y="1" width="14" height="22" fill="#1a1a1a" />
+      {/* Server units */}
+      {[0,1,2,3,4].map((i) => (
+        <g key={i}>
+          <rect x="2" y={2 + i*4} width="12" height="3" fill="#303030" />
+          <rect x="3" y={3 + i*4} width="1" height="1" fill="#39ff14"
+            style={{ animation: `serverBlink ${1 + i * 0.3}s step-end infinite` }} />
+          <rect x="5" y={3 + i*4} width="1" height="1" fill="#ef5350"
+            style={{ animation: `serverBlink ${0.7 + i * 0.2}s step-end infinite` }} />
+          <rect x="7" y={3 + i*4} width="5" height="1" fill="#424242" />
+        </g>
+      ))}
+      {/* Feet */}
+      <rect x="2" y="22" width="3" height="2" fill="#424242" />
+      <rect x="11" y="22" width="3" height="2" fill="#424242" />
+    </svg>
+  );
+}
+
+/* ─── PLANT ───────────────────────────────────── */
+export function Plant() {
+  return (
+    <svg viewBox="0 0 10 14" width={30} height={42} style={{ imageRendering: "pixelated" }}>
+      {/* Pot */}
+      <rect x="2" y="10" width="6" height="4" fill="#BF360C" />
+      <rect x="1" y="9"  width="8" height="2" fill="#D84315" />
+      {/* Soil */}
+      <rect x="2" y="10" width="6" height="1" fill="#4E342E" />
+      {/* Stem */}
+      <rect x="4" y="4" width="2" height="6" fill="#388E3C" />
+      {/* Leaves */}
+      <rect x="1" y="2" width="4" height="4" fill="#43A047" />
+      <rect x="5" y="1" width="4" height="4" fill="#2E7D32" />
+      <rect x="2" y="0" width="3" height="3" fill="#66BB6A" />
+    </svg>
+  );
+}

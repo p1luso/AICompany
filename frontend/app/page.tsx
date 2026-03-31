@@ -1,0 +1,10 @@
+import dynamic from "next/dynamic";
+
+const MissionControl = dynamic(
+  () => import("@/components/MissionControl").then((m) => ({ default: m.MissionControl })),
+  { ssr: false, loading: () => null }
+);
+
+export default function Home() {
+  return <MissionControl />;
+}
