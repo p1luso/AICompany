@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     # FastAPI
     APP_NAME: str = "Agency AI Worker"
-    APP_VERSION: str = "0.1.0"
+    APP_VERSION: str = "0.2.0"
     DEBUG: bool = False
 
     # Servidor
@@ -26,14 +26,17 @@ class Settings(BaseSettings):
     # Eventos
     REDIS_EVENTS_CHANNEL: str = "agency_events"
 
-    # LLM APIs
-    OPENAI_API_KEY: str = ""
-    ANTHROPIC_API_KEY: str = ""
+    # LLM — Ollama (Docker service)
+    OLLAMA_BASE_URL: str = "http://ollama:11434"
+    OLLAMA_MODEL: str = "llama3.2"
 
     # CrewAI
     CREW_VERBOSE: bool = True
-    CREW_MEMORY: bool = True
+    CREW_MEMORY: bool = False
     CREW_CACHE: bool = True
+
+    # Memory — ruta física donde los agentes escriben sus outputs
+    MEMORY_OUTPUT_PATH: str = "/memory"
 
     # Logging
     LOG_LEVEL: str = "info"

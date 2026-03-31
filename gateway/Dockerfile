@@ -11,7 +11,7 @@ COPY . .
 
 # Build binary (Go will download dependencies as needed)
 # Use -mod=mod to allow go to update modules and -trimpath for reproducible builds
-RUN CGO_ENABLED=1 GOOS=linux GOSUMDB=off go build -mod=mod -o gateway main.go config.go redis.go
+RUN CGO_ENABLED=1 GOOS=linux GOSUMDB=off go build -mod=mod -o gateway .
 
 # Final stage
 FROM alpine:3.18

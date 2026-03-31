@@ -1,134 +1,136 @@
 """
-Definición de los 3 agentes colaborativos usando CrewAI
+Agentes colaborativos usando CrewAI >= 1.0 + Ollama (via LiteLLM).
+Después del crew.kickoff(), Scribe y Sentinel escriben sus outputs
+a archivos .md físicos en MEMORY_OUTPUT_PATH.
 """
 import logging
-from typing import Optional
-from crewai import Agent, Task, Crew
+from datetime import datetime
+from pathlib import Path
+
+from crewai import Agent, Task, Crew, LLM
+
 from redis_events import event_publisher
 from config import settings
 
 logger = logging.getLogger(__name__)
 
 
-class EventCapturingAgent(Agent):
-    """Extensión de Agent que captura eventos y los publica a Redis"""
+# ─── LLM (Ollama via LiteLLM built into CrewAI) ─────────────
 
-    def __init__(self, *args, task_id: Optional[str] = None, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.task_id = task_id
+def get_llm() -> LLM:
+    """Crea instancia de LLM apuntando a Ollama."""
+    model_name = f"ollama/{settings.OLLAMA_MODEL}"
+    logger.info(f"🧠 LLM: {model_name} @ {settings.OLLAMA_BASE_URL}")
+    return LLM(
+        model=model_name,
+        base_url=settings.OLLAMA_BASE_URL,
+        temperature=0.7,
+    )
 
-    def _emit_event(self, action: str, message: str, metadata: dict = None):
-        """Publica un evento a Redis"""
-        event_publisher.publish_event(
-            agent=self.name,
-            action=action,
-            message=message,
-            task_id=self.task_id,
-            metadata=metadata,
+
+# ─── Escritura física de archivos ────────────────────────────
+
+def write_memory_file(filename: str, content: str, agent_name: str) -> bool:
+    """
+    Escribe contenido a un archivo .md en MEMORY_OUTPUT_PATH.
+    El frontend detecta el cambio de mtime y dispara animaciones.
+    """
+    try:
+        output_dir = Path(settings.MEMORY_OUTPUT_PATH)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        filepath = output_dir / filename
+        header = (
+            f"# {filename.replace('.md', '').replace('_', ' ').title()}\n\n"
+            f"**Generado por:** {agent_name}\n"
+            f"**Fecha:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n"
+            f"---\n\n"
         )
 
+        filepath.write_text(header + content, encoding="utf-8")
+        logger.info(f"📝 Archivo escrito: {filepath} ({len(content)} chars)")
+        return True
 
-def create_manager_agent(task_id: str) -> Agent:
-    """
-    Crea el agente Manager
-    - Toma el requerimiento del usuario
-    - Planifica los pasos
-    - Dirige la ejecución (Daily)
-    """
-    return EventCapturingAgent(
+    except Exception as e:
+        logger.error(f"❌ Error escribiendo {filename}: {e}")
+        return False
+
+
+# ─── Factory de agentes ─────────────────────────────────────
+
+def create_manager_agent(llm: LLM) -> Agent:
+    return Agent(
         role="Manager / Director Ejecutivo",
-        goal="""
-        Tomar los requerimientos del usuario, crear un plan detallado de ejecución,
-        asignar tareas al especialista, revisar el trabajo del QA y garantizar
-        que se cumplan los objetivos con calidad.
-        """,
-        backstory="""
-        Eres un director ejecutivo experimentado con 20 años de experiencia
-        en gestión de proyectos y operaciones. Tu rol es planificar estratégicamente,
-        coordinar equipos y asegurar resultados de alta calidad.
-        """,
+        goal=(
+            "Tomar los requerimientos del usuario, crear un plan detallado de ejecución, "
+            "asignar tareas al especialista, revisar el trabajo del QA y garantizar "
+            "que se cumplan los objetivos con calidad."
+        ),
+        backstory=(
+            "Eres un director ejecutivo experimentado con 20 años de experiencia "
+            "en gestión de proyectos y operaciones. Tu rol es planificar estratégicamente, "
+            "coordinar equipos y asegurar resultados de alta calidad."
+        ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=True,
-        task_id=task_id,
+        llm=llm,
     )
 
 
-def create_specialist_agent(task_id: str) -> Agent:
-    """
-    Crea el agente Especialista
-    - Ejecuta tareas específicas
-    - Investigación, redacción, análisis
-    - Trabaja bajo dirección del Manager
-    """
-    return EventCapturingAgent(
-        role="Especialista / Ejecutor",
-        goal="""
-        Ejecutar tareas específicas con precisión y creatividad. Realizar
-        investigaciones profundas, redactar contenido de calidad, analizar
-        datos y producir resultados tangibles y medibles.
-        """,
-        backstory="""
-        Eres un especialista técnico y creativo con experiencia en múltiples
-        disciplinas: investigación, escritura, análisis de datos y resolución
-        de problemas complejos. Te enfocas en la ejecución eficiente y en
-        la calidad del trabajo entregado.
-        """,
+def create_specialist_agent(llm: LLM) -> Agent:
+    return Agent(
+        role="Scribe / Copywriter",
+        goal=(
+            "Ejecutar tareas de redacción y contenido con precisión y creatividad. "
+            "Producir borradores, análisis y documentos de alta calidad."
+        ),
+        backstory=(
+            "Eres Scribe, un copywriter experto. Te especializas en redactar "
+            "contenido claro, persuasivo y bien estructurado. Cada texto que produces "
+            "es un borrador listo para revisión."
+        ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
-        task_id=task_id,
+        llm=llm,
     )
 
 
-def create_qa_agent(task_id: str) -> Agent:
-    """
-    Crea el agente QA/Reviewer
-    - Revisa el trabajo del especialista
-    - Busca errores y mejoras
-    - Valida contra los requerimientos originales
-    """
-    return EventCapturingAgent(
-        role="QA / Revisor de Calidad",
-        goal="""
-        Revisar exhaustivamente el trabajo del especialista, identificar errores,
-        inconsistencias y áreas de mejora. Validar que el resultado cumple con
-        los requerimientos originales y que es de alta calidad.
-        """,
-        backstory="""
-        Eres un revisor experto con ojo crítico para los detalles. Tu experiencia
-        en QA y validación te permite identificar problemas que otros pasan por alto.
-        Garantizas que solo trabajo de excelencia sea entregado al cliente.
-        """,
+def create_qa_agent(llm: LLM) -> Agent:
+    return Agent(
+        role="Sentinel / QA Lead",
+        goal=(
+            "Revisar exhaustivamente el trabajo del especialista, identificar errores, "
+            "inconsistencias y áreas de mejora. Validar que el resultado cumple con "
+            "los requerimientos originales."
+        ),
+        backstory=(
+            "Eres Sentinel, un QA Lead implacable. Tu ojo crítico detecta errores "
+            "que otros pasan por alto. Garantizas que solo trabajo de excelencia "
+            "sea entregado. Documentas cada hallazgo en reportes claros."
+        ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
-        task_id=task_id,
+        llm=llm,
     )
 
+
+# ─── Equipo ─────────────────────────────────────────────────
 
 class AgencyTeam:
-    """Equipo de agentes que trabajan juntos"""
+    """Equipo de 3 agentes que trabajan juntos y escriben resultados a disco."""
 
     def __init__(self, task_id: str):
         self.task_id = task_id
-        self.manager = create_manager_agent(task_id)
-        self.specialist = create_specialist_agent(task_id)
-        self.qa = create_qa_agent(task_id)
+        self.llm = get_llm()
+        self.manager = create_manager_agent(self.llm)
+        self.specialist = create_specialist_agent(self.llm)
+        self.qa = create_qa_agent(self.llm)
 
     def execute_task(
         self, title: str, description: str, priority: str = "medium"
     ) -> dict:
-        """
-        Ejecuta una tarea con el equipo de agentes
-
-        Args:
-            title: Título de la tarea
-            description: Descripción detallada
-            priority: Prioridad (low, medium, high)
-
-        Returns:
-            dict: Resultado de la ejecución
-        """
         try:
-            # Notificar inicio
+            # ── Notificar inicio ──────────────────────
             event_publisher.publish_event(
                 agent="Manager",
                 action="iniciando",
@@ -137,84 +139,80 @@ class AgencyTeam:
                 metadata={"priority": priority},
             )
 
-            # Tarea 1: Manager analiza y planifica
+            # ── Task 1: Manager planifica ─────────────
+            event_publisher.publish_event(
+                agent="Manager",
+                action="planificando",
+                message="Analizando requerimientos y creando plan de ejecución...",
+                task_id=self.task_id,
+            )
+
             task_planning = Task(
-                description=f"""
-                Analiza el siguiente requerimiento y crea un plan detallado de ejecución:
-
-                TÍTULO: {title}
-                DESCRIPCIÓN: {description}
-                PRIORIDAD: {priority}
-
-                Debes:
-                1. Entender completamente el requerimiento
-                2. Identificar los pasos necesarios
-                3. Estimar tiempo y recursos
-                4. Crear un plan ejecutable
-                """,
-                expected_output="""
-                Un plan estructurado con:
-                - Análisis del requerimiento
-                - Pasos a seguir numerados
-                - Recursos necesarios
-                - Cronograma estimado
-                """,
+                description=(
+                    f"Analiza el siguiente requerimiento y crea un plan detallado:\n\n"
+                    f"TÍTULO: {title}\n"
+                    f"DESCRIPCIÓN: {description}\n"
+                    f"PRIORIDAD: {priority}\n\n"
+                    f"Debes:\n"
+                    f"1. Entender completamente el requerimiento\n"
+                    f"2. Identificar los pasos necesarios\n"
+                    f"3. Crear un plan ejecutable claro\n"
+                ),
+                expected_output=(
+                    "Un plan estructurado con análisis del requerimiento, "
+                    "pasos a seguir numerados, y cronograma estimado."
+                ),
                 agent=self.manager,
             )
 
-            # Tarea 2: Especialista ejecuta
+            # ── Task 2: Scribe ejecuta ────────────────
+            event_publisher.publish_event(
+                agent="Scribe",
+                action="trabajando",
+                message=f"Scribe comenzando ejecución: {title}",
+                task_id=self.task_id,
+            )
+
             task_execution = Task(
-                description=f"""
-                Basándote en el plan del Manager, ejecuta la siguiente tarea:
-
-                TÍTULO: {title}
-                DESCRIPCIÓN: {description}
-
-                Debes:
-                1. Seguir el plan del Manager
-                2. Realizar investigación si es necesario
-                3. Producir un resultado de alta calidad
-                4. Documentar el proceso
-                """,
-                expected_output="""
-                Un resultado completo y documentado que incluya:
-                - Análisis o contenido producido
-                - Pasos realizados
-                - Conclusiones
-                - Cualquier dato o evidencia relevante
-                """,
+                description=(
+                    f"Basándote en el plan del Manager, ejecuta la siguiente tarea:\n\n"
+                    f"TÍTULO: {title}\n"
+                    f"DESCRIPCIÓN: {description}\n\n"
+                    f"Produce un resultado completo, bien redactado y documentado."
+                ),
+                expected_output=(
+                    "Un resultado completo que incluya análisis o contenido producido, "
+                    "pasos realizados, conclusiones y datos relevantes."
+                ),
                 agent=self.specialist,
                 context=[task_planning],
             )
 
-            # Tarea 3: QA revisa
+            # ── Task 3: Sentinel revisa ───────────────
+            event_publisher.publish_event(
+                agent="Sentinel",
+                action="revisando",
+                message="Sentinel iniciando revisión de calidad...",
+                task_id=self.task_id,
+            )
+
             task_review = Task(
-                description=f"""
-                Revisa exhaustivamente el trabajo completado en la tarea anterior.
-
-                Requerimiento original:
-                TÍTULO: {title}
-                DESCRIPCIÓN: {description}
-
-                Debes:
-                1. Validar que el resultado cumple con los requerimientos
-                2. Buscar errores o inconsistencias
-                3. Proponer mejoras si es necesario
-                4. Dar aprobación o indicar cambios requeridos
-                """,
-                expected_output="""
-                Un reporte de QA que incluya:
-                - Validación de requerimientos
-                - Errores encontrados (si existen)
-                - Mejoras propuestas
-                - Aprobación final o cambios requeridos
-                - Calidad general del resultado
-                """,
+                description=(
+                    f"Revisa exhaustivamente el trabajo completado.\n\n"
+                    f"Requerimiento original:\n"
+                    f"TÍTULO: {title}\n"
+                    f"DESCRIPCIÓN: {description}\n\n"
+                    f"Valida calidad, errores, e inconsistencias."
+                ),
+                expected_output=(
+                    "Un reporte de QA con validación de requerimientos, "
+                    "errores encontrados, mejoras propuestas y aprobación final."
+                ),
                 agent=self.qa,
                 context=[task_execution],
             )
 
-            # Crear Crew (equipo de trabajo)
+            # ── Crear y ejecutar Crew ─────────────────
             crew = Crew(
                 agents=[self.manager, self.specialist, self.qa],
                 tasks=[task_planning, task_execution, task_review],
@@ -222,11 +220,56 @@ class AgencyTeam:
                 memory=settings.CREW_MEMORY,
             )
 
-            # Ejecutar
             logger.info(f"🚀 Ejecutando crew para tarea: {self.task_id}")
             result = crew.kickoff()
 
-            # Notificar conclusión
+            # ── ESCRIBIR OUTPUTS A ARCHIVOS FÍSICOS ───
+            result_str = str(result)
+
+            # Scribe → borradores_copy.md
+            specialist_output = str(task_execution.output) if task_execution.output else result_str
+            event_publisher.publish_event(
+                agent="Scribe",
+                action="documentando",
+                message="Scribe guardando borrador en memoria...",
+                task_id=self.task_id,
+            )
+            write_memory_file(
+                "borradores_copy.md",
+                f"## Tarea: {title}\n\n{specialist_output}",
+                "Scribe (Copywriter)",
+            )
+
+            # Sentinel → qa_report.md
+            qa_output = str(task_review.output) if task_review.output else "QA completado sin observaciones."
+            event_publisher.publish_event(
+                agent="Sentinel",
+                action="validando",
+                message="Sentinel guardando reporte QA en memoria...",
+                task_id=self.task_id,
+            )
+            write_memory_file(
+                "qa_report.md",
+                f"## QA Report: {title}\n\n{qa_output}",
+                "Sentinel (QA Lead)",
+            )
+
+            # Manager → system_logs.md
+            manager_output = str(task_planning.output) if task_planning.output else ""
+            write_memory_file(
+                "system_logs.md",
+                (
+                    f"## Tarea Completada: {title}\n\n"
+                    f"**ID:** {self.task_id}\n"
+                    f"**Prioridad:** {priority}\n"
+                    f"**Estado:** Completada\n\n"
+                    f"### Plan del Manager\n{manager_output}\n\n"
+                    f"### Resultado Final\n{result_str}\n"
+                ),
+                "Manager (Sistema)",
+            )
+
+            # ── Notificar conclusión ──────────────────
             event_publisher.publish_event(
                 agent="Manager",
                 action="completada",
@@ -234,7 +277,11 @@ class AgencyTeam:
                 task_id=self.task_id,
             )
 
-            return {"status": "completed", "result": str(result), "task_id": self.task_id}
+            return {
+                "status": "completed",
+                "result": result_str,
+                "task_id": self.task_id,
+            }
 
         except Exception as e:
             logger.error(f"❌ Error ejecutando crew: {e}")
@@ -244,6 +291,18 @@ class AgencyTeam:
                 message=f"Error en tarea: {str(e)}",
                 task_id=self.task_id,
             )
+
+            write_memory_file(
+                "system_logs.md",
+                (
+                    f"## Error en Tarea: {title}\n\n"
+                    f"**ID:** {self.task_id}\n"
+                    f"**Error:** {str(e)}\n"
+                    f"**Timestamp:** {datetime.utcnow().isoformat()}\n"
+                ),
+                "Manager (Sistema)",
+            )
+
             return {
                 "status": "failed",
                 "error": str(e),
