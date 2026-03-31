@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     # Eventos
     REDIS_EVENTS_CHANNEL: str = "agency_events"
 
-    # LLM — Ollama (Docker service)
-    OLLAMA_BASE_URL: str = "http://ollama:11434"
+    # LLM — Ollama (host macOS)
+    OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
     OLLAMA_MODEL: str = "llama3.2"
 
     # CrewAI

@@ -16,25 +16,7 @@ services:
       timeout: 3s
       retries: 5
 
-  # Ollama: Local LLM server
-  ollama:
-    image: ollama/ollama:latest
-    container_name: agency_ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - agency_network
-    healthcheck:
-      test: ["CMD-SHELL", "ollama list || true"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
-
-  # AI Worker: Python + FastAPI + CrewAI + Ollama
+  # AI Worker: Python + FastAPI + CrewAI + Ollama (host)
   ai-worker:
     build:
       context: ./ai-worker
@@ -46,20 +28,20 @@ services:
       - REDIS_URL=redis://redis:6379
       - WORKER_PORT=8001
       - LOG_LEVEL=info
-      # Ollama — apunta al servicio Docker
-      - OLLAMA_BASE_URL=http://ollama:11434
+      # Ollama corre en el host macOS → host.docker.internal
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - OLLAMA_MODEL=llama3.2
       # Ruta donde los agentes escriben outputs .md
       - MEMORY_OUTPUT_PATH=/memory
     depends_on:
       redis:
         condition: service_healthy
-      ollama:
-        condition: service_healthy
     volumes:
       - ./ai-worker:/app
       # Volumen compartido: el AI Worker ESCRIBE aquí
       - ./frontend/memory:/memory
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - agency_network
     restart: unless-stopped
@@ -102,7 +84,7 @@ services:
     depends_on:
       - gateway
     volumes:
-      # Volumen compartido: el frontend solo LEE (ro)
+      # Volumen compartido: el frontend LEE los .md (read-only)
       - ./frontend/memory:/memory:ro
     networks:
       - agency_network
@@ -114,6 +96,4 @@ networks:
 
 volumes:
   redis_data:
-    driver: local
-  ollama_data:
     driver: local
