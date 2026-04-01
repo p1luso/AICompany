@@ -139,3 +139,39 @@ export function Plant() {
     </svg>
   );
 }
+/* ─── COFFEE MACHINE ────────────────────────── */
+export function CoffeeMachine() {
+  return (
+    <svg viewBox="0 0 10 12" width={30} height={36} style={{ imageRendering: "pixelated" }}>
+      {/* Body */}
+      <rect x="1" y="0" width="8" height="12" fill="#424242" />
+      <rect x="2" y="1" width="6" height="3" fill="#616161" />
+      {/* Buttons */}
+      <rect x="3" y="2" width="1" height="1" fill="#ef5350" />
+      <rect x="5" y="2" width="1" height="1" fill="#39ff14" />
+      {/* Dispenser Area */}
+      <rect x="2" y="5" width="6" height="5" fill="#212121" />
+      {/* Cup placeholder */}
+      <rect x="4" y="8" width="2" height="2" fill="#EEEEEE" />
+      {/* Steam (animated via CSS in real usage or just static) */}
+      <rect x="4" y="3" width="1" height="1" fill="#fff" opacity="0.4" />
+    </svg>
+  );
+}
+
+/* ─── WATER COOLER ────────────────────────── */
+export function WaterCooler() {
+  return (
+    <svg viewBox="0 0 8 16" width={24} height={48} style={{ imageRendering: "pixelated" }}>
+      {/* Base */}
+      <rect x="1" y="8" width="6" height="8" fill="#E0E0E0" />
+      <rect x="2" y="9" width="4" height="2" fill="#BDBDBD" />
+      {/* Tank */}
+      <rect x="1" y="1" width="6" height="7" fill="#4fc3f7" opacity="0.6" />
+      <rect x="2" y="0" width="4" height="1" fill="#29B6F6" />
+      {/* Dispenser buttons */}
+      <rect x="2" y="12" width="1" height="1" fill="#2196F3" />
+      <rect x="5" y="12" width="1" height="1" fill="#F44336" />
+    </svg>
+  );
+}

@@ -2,7 +2,7 @@
 
 import { AgentStatus } from "@/hooks/useAgentTracker";
 import { Agent } from "./Agent";
-import { Desk, ConferenceTable, ReportIcon, Bookcase, ServerRack, Plant } from "./Furniture";
+import { Desk, ConferenceTable, ReportIcon, Bookcase, ServerRack, Plant, CoffeeMachine, WaterCooler } from "./Furniture";
 
 interface PixelOfficeProps {
   agents: AgentStatus[];
@@ -13,9 +13,7 @@ export function PixelOffice({ agents }: PixelOfficeProps) {
   const scribe   = agents.find((a) => a.id === "scribe");
   const sentinel = agents.find((a) => a.id === "sentinel");
 
-  const scribeWalking   = scribe?.state === "active" && scribe.justChanged;
-  const sentinelWalking = sentinel?.state === "active" && sentinel.justChanged;
-  const reportVisible   = scribeWalking || (scribe?.lastModified !== null);
+  const reportVisible = scribe?.state === "active" || (scribe?.lastModified !== null);
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: "#0a0a1a" }}>
@@ -50,51 +48,27 @@ export function PixelOffice({ agents }: PixelOfficeProps) {
             className="relative flex-1 floor-tiles overflow-hidden"
             style={{ border: "4px solid #8B6914", borderBottom: "4px solid #5D4037" }}
           >
-            {/* Wallpaper top strip */}
             <div
               className="absolute top-0 left-0 right-0 h-6"
               style={{ background: "#1a237e", borderBottom: "3px solid #283593" }}
             />
 
-            {/* Bookcase — top-left */}
-            <div className="absolute top-6 left-2">
-              <Bookcase />
-            </div>
+            {/* Furniture */}
+            <div className="absolute top-6 left-2"><Bookcase /></div>
+            <div className="absolute top-6 right-3"><Plant /></div>
+            
+            {/* NEW AMBIENT LIFE FURNITURE */}
+            <div className="absolute bottom-4 right-10"><CoffeeMachine /></div>
+            <div className="absolute top-8 left-1/4"><WaterCooler /></div>
 
-            {/* Plant — top-right corner */}
-            <div className="absolute top-6 right-3">
-              <Plant />
-            </div>
+            {/* DESKS */}
+            <div className="absolute bottom-16 left-6"><Desk color="#a0522d" /></div>
+            <div className="absolute bottom-16 left-1/2 -translate-x-1/2"><Desk color="#8B6914" /></div>
 
-            {/* DESKS + AGENTS */}
-            {/* Alice desk — left */}
-            <div className="absolute bottom-16 left-6">
-              <Desk color="#a0522d" />
-            </div>
-            <div
-              className="absolute"
-              style={{ bottom: "62px", left: "10px" }}
-            >
-              <Agent id="alice" state={alice?.state ?? "idle"} />
-            </div>
+            {/* AGENTS (Self-positioned via props/config) */}
+            <Agent id="alice" state={alice?.state ?? "idle"} />
+            <Agent id="scribe" state={scribe?.state ?? "idle"} />
 
-            {/* Scribe desk — center */}
-            <div className="absolute bottom-16 left-1/2 -translate-x-1/2">
-              <Desk color="#8B6914" />
-            </div>
-            {/* Scribe agent — animated walking when active */}
-            <div
-              className="absolute"
-              style={{
-                bottom: "62px",
-                left: scribeWalking ? "calc(50% + 80px)" : "calc(50% - 26px)",
-                transition: "left 1.2s ease-in-out",
-              }}
-            >
-              <Agent id="scribe" state={scribe?.state ?? "idle"} />
-            </div>
-
-            {/* Room divider wall (right edge) */}
             <div
               className="absolute top-0 bottom-0 right-0 w-1"
               style={{ background: "#5D4037", boxShadow: "inset -2px 0 0 #3E2723" }}
@@ -112,13 +86,11 @@ export function PixelOffice({ agents }: PixelOfficeProps) {
               backgroundSize: "16px 16px",
             }}
           >
-            {/* Top strip */}
             <div
               className="absolute top-0 left-0 right-0 h-5"
               style={{ background: "#0288D1", borderBottom: "3px solid #01579B" }}
             />
 
-            {/* Conference table — centered */}
             <div className="absolute inset-0 flex items-center justify-center mt-4">
               <div className="relative">
                 <ConferenceTable />
@@ -126,7 +98,6 @@ export function PixelOffice({ agents }: PixelOfficeProps) {
               </div>
             </div>
 
-            {/* Floor lamp */}
             <div className="absolute bottom-3 right-3">
               <svg viewBox="0 0 6 12" width={18} height={36} style={{ imageRendering: "pixelated" }}>
                 <rect x="1" y="0" width="4" height="3" fill="#FDD835" opacity="0.9" />
@@ -147,30 +118,19 @@ export function PixelOffice({ agents }: PixelOfficeProps) {
             backgroundImage: "repeating-linear-gradient(0deg, #111 0px, #111 4px, #0a0a0a 4px, #0a0a0a 8px)",
           }}
         >
-          {/* Top strip */}
           <div
             className="absolute top-0 left-0 right-0 h-5"
             style={{ background: "#B71C1C", borderBottom: "3px solid #7f0000" }}
           />
 
-          {/* Server racks row */}
           <div className="absolute top-5 left-0 right-0 flex items-end gap-4 px-6 pt-2">
             <ServerRack />
             <ServerRack />
             <ServerRack />
 
-            {/* Sentinel agent — walks to server room */}
-            <div
-              className="mb-1 transition-all"
-              style={{
-                marginLeft: sentinelWalking ? "8px" : "32px",
-                transition: "margin 1.2s ease-in-out",
-              }}
-            >
-              <Agent id="sentinel" state={sentinel?.state ?? "idle"} />
-            </div>
+            {/* Sentinel agent */}
+            <Agent id="sentinel" state={sentinel?.state ?? "idle"} />
 
-            {/* Network switch */}
             <div className="ml-auto mr-4 self-center">
               <svg viewBox="0 0 24 8" width={72} height={24} style={{ imageRendering: "pixelated" }}>
                 <rect x="0" y="0" width="24" height="8" fill="#1a1a1a" />
@@ -187,7 +147,6 @@ export function PixelOffice({ agents }: PixelOfficeProps) {
             </div>
           </div>
 
-          {/* Ambient cable lines */}
           <div
             className="absolute bottom-0 left-0 right-0 h-3"
             style={{

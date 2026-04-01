@@ -1,13 +1,15 @@
 "use client";
 
+import { useEffect, useState, useMemo, useRef } from "react";
 import { AgentState } from "@/hooks/useAgentTracker";
+import { WAYPOINTS, Waypoint } from "./config";
 
 /* ─────────────────────────────────────────────────────────────
    SVG PIXEL ART SPRITES (12×16 grid, each unit = 4px rendered)
    Alice    → Blue hoodie  / Brown hair / Glasses
    Scribe   → Green sweater / Dark bun
    Sentinel → Red jacket   / Spiky black hair
-──────────────────────────────────────────────────────────────── */
+   ──────────────────────────────────────────────────────────────── */
 
 function AliceSprite({ walking }: { walking: boolean }) {
   return (
@@ -167,24 +169,99 @@ export const AGENT_CONFIG = {
 interface AgentProps {
   id: "alice" | "scribe" | "sentinel";
   state: AgentState;
-  style?: React.CSSProperties;
 }
 
-export function Agent({ id, state, style }: AgentProps) {
+export function Agent({ id, state }: AgentProps) {
   const config = AGENT_CONFIG[id];
+  const agentWaypoints = WAYPOINTS[id];
+  const deskWaypoint = agentWaypoints.desk;
+
+  const [currentPos, setCurrentPos] = useState<Waypoint>(deskWaypoint);
+  const [isAmbientWalking, setIsAmbientWalking] = useState(false);
+  const [ambientIcon, setAmbientIcon] = useState<string | null>(null);
+  
   const SpriteComponent = config.sprite;
-  const isWalking = state === "walking";
-  const isActive  = state === "active" || isWalking;
+  
+  // State priorities
+  const isActive = state === "active";
+  const isWalking = isAmbientWalking || isActive; // "active" agents are always "at desk" in this simple layout but could be walking to it 
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Wandering Logic
+  useEffect(() => {
+    if (isActive) {
+      // INTERRUPT: Go back to desk immediately if working
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setAmbientIcon(null);
+      setIsAmbientWalking(true);
+      setCurrentPos(deskWaypoint);
+      
+      const t = setTimeout(() => setIsAmbientWalking(false), 800); // Fast walk to desk
+      return () => clearTimeout(t);
+    } else {
+      // IDLE WANDERING ROUTINE
+      const startWandering = () => {
+        const waitTime = Math.floor(Math.random() * (40000 - 15000) + 15000); // 15-40s
+        
+        timerRef.current = setTimeout(() => {
+          // Choose random waypoint that isn't the desk
+          const keys = Object.keys(agentWaypoints).filter(k => k !== 'desk');
+          const randomKey = keys[Math.floor(Math.random() * keys.length)];
+          const target = agentWaypoints[randomKey];
+
+          // Walk to target
+          setIsAmbientWalking(true);
+          setCurrentPos(target);
+          
+          // Stay there for a few seconds
+          setTimeout(() => {
+            setIsAmbientWalking(false);
+            // Change icon occasionally while idle at waypoint
+            if (randomKey === 'coffee') setAmbientIcon("☕");
+            else if (Math.random() > 0.5) setAmbientIcon("💭");
+
+            // After 5 seconds, walk back to desk or elsewhere
+            setTimeout(() => {
+              setAmbientIcon(null);
+              setIsAmbientWalking(true);
+              setCurrentPos(deskWaypoint);
+              setTimeout(() => {
+                setIsAmbientWalking(false);
+                startWandering(); // Loop
+              }, 1200);
+            }, 6000);
+          }, 1200);
+        }, waitTime);
+      };
+
+      startWandering();
+      return () => {
+        if (timerRef.current) clearTimeout(timerRef.current);
+      };
+    }
+  }, [isActive, id, agentWaypoints, deskWaypoint]);
 
   return (
     <div
-      className="relative flex flex-col items-center"
-      style={{ ...style, transition: "transform 1.2s ease-in-out" }}
+      className="absolute flex flex-col items-center pointer-events-none"
+      style={{ 
+        bottom: `${currentPos.y}px`, 
+        left: `${currentPos.x}px`,
+        transition: isActive ? "all 0.8s ease-in" : "all 1.2s ease-in-out",
+        zIndex: 50
+      }}
     >
       {/* Speech bubble */}
-      {isActive && (
+      {(isActive || ambientIcon) && (
         <div className="speech-bubble animate-float-bubble mb-1 z-10">
-          {config.emoji}
+          {isActive ? (
+            <span className="flex items-center gap-1">
+              {config.emoji} <span className="typing-dots" />
+            </span>
+          ) : (
+            ambientIcon
+          )}
         </div>
       )}
 
@@ -210,7 +287,11 @@ export function Agent({ id, state, style }: AgentProps) {
       {/* Status dot */}
       <div
         className="w-2 h-2 mt-0.5"
-        style={{ background: isActive ? "#39ff14" : "#555", boxShadow: isActive ? "0 0 6px #39ff14" : "none" }}
+        style={{ 
+          background: isActive ? "#39ff14" : "#555", 
+          boxShadow: isActive ? "0 0 6px #39ff14" : "none",
+          borderRadius: "50%"
+        }}
       />
     </div>
   );
