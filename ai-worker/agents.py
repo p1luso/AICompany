@@ -17,12 +17,12 @@ logger = logging.getLogger(__name__)
 
 # ─── LLM (Ollama via LiteLLM built into CrewAI) ─────────────
 
-def get_llm() -> LLM:
-    """Crea instancia de LLM apuntando a Ollama."""
-    model_name = f"ollama/{settings.OLLAMA_MODEL}"
-    logger.info(f"🧠 LLM: {model_name} @ {settings.OLLAMA_BASE_URL}")
+def get_llm(model_name: str) -> LLM:
+    """Crea instancia de LLM apuntando a Ollama con el modelo especificado."""
+    full_model = f"ollama/{model_name}"
+    logger.info(f"🧠 LLM: {full_model} @ {settings.OLLAMA_BASE_URL}")
     return LLM(
-        model=model_name,
+        model=full_model,
         base_url=settings.OLLAMA_BASE_URL,
         temperature=0.7,
     )
@@ -121,10 +121,13 @@ class AgencyTeam:
 
     def __init__(self, task_id: str):
         self.task_id = task_id
-        self.llm = get_llm()
-        self.manager = create_manager_agent(self.llm)
-        self.specialist = create_specialist_agent(self.llm)
-        self.qa = create_qa_agent(self.llm)
+        # Model Routing: cada agente recibe su LLM optimizado
+        llm_manager = get_llm(settings.MODEL_MANAGER)
+        llm_scribe = get_llm(settings.MODEL_SCRIBE)
+        llm_qa = get_llm(settings.MODEL_QA)
+        self.manager = create_manager_agent(llm_manager)
+        self.specialist = create_specialist_agent(llm_scribe)
+        self.qa = create_qa_agent(llm_qa)
 
     def execute_task(
         self, title: str, description: str, priority: str = "medium"
@@ -149,64 +152,92 @@ class AgencyTeam:
 
             task_planning = Task(
                 description=(
-                    f"Analiza el siguiente requerimiento y crea un plan detallado:\n\n"
+                    f"Eres el Director de Contenido. Recibes una transcripción cruda de un video.\n\n"
                     f"TÍTULO: {title}\n"
-                    f"DESCRIPCIÓN: {description}\n"
+                    f"TRANSCRIPCIÓN / CONTENIDO FUENTE:\n{description}\n\n"
                     f"PRIORIDAD: {priority}\n\n"
-                    f"Debes:\n"
-                    f"1. Entender completamente el requerimiento\n"
-                    f"2. Identificar los pasos necesarios\n"
-                    f"3. Crear un plan ejecutable claro\n"
+                    f"Tu trabajo:\n"
+                    f"1. Lee y comprende la transcripción completa.\n"
+                    f"2. Extrae EXACTAMENTE 3 puntos clave o lecciones principales.\n"
+                    f"3. Para cada punto, escribe un título corto y un párrafo explicativo.\n"
+                    f"4. Ordénalos de mayor a menor impacto.\n"
                 ),
                 expected_output=(
-                    "Un plan estructurado con análisis del requerimiento, "
-                    "pasos a seguir numerados, y cronograma estimado."
+                    "Una lista numerada de exactamente 3 puntos clave extraídos de la transcripción. "
+                    "Cada punto con un título breve y un párrafo que explique la lección o idea principal."
                 ),
                 agent=self.manager,
             )
 
-            # ── Task 2: Scribe ejecuta ────────────────
+            # ── Task 2: Scribe recicla contenido ─────
             event_publisher.publish_event(
                 agent="Scribe",
                 action="trabajando",
-                message=f"Scribe comenzando ejecución: {title}",
+                message=f"Scribe reciclando contenido: {title}",
                 task_id=self.task_id,
             )
 
             task_execution = Task(
                 description=(
-                    f"Basándote en el plan del Manager, ejecuta la siguiente tarea:\n\n"
-                    f"TÍTULO: {title}\n"
-                    f"DESCRIPCIÓN: {description}\n\n"
-                    f"Produce un resultado completo, bien redactado y documentado."
+                    f"Eres un Copywriter experto en redes sociales. "
+                    f"Recibes los 3 puntos clave extraídos por el Manager de esta transcripción:\n\n"
+                    f"TÍTULO ORIGINAL: {title}\n\n"
+                    f"Con esos puntos, produce DOS piezas de contenido:\n\n"
+                    f"## PIEZA 1: Hilo de X (Twitter)\n"
+                    f"- Entre 5 y 8 tweets.\n"
+                    f"- Primer tweet debe ser un hook irresistible que genere curiosidad.\n"
+                    f"- Cada tweet máximo 280 caracteres.\n"
+                    f"- Usa saltos de línea dentro de cada tweet para legibilidad.\n"
+                    f"- Último tweet con CTA (call to action).\n\n"
+                    f"## PIEZA 2: Post de LinkedIn\n"
+                    f"- Tono profesional pero cercano y humano.\n"
+                    f"- Entre 800 y 1500 caracteres.\n"
+                    f"- Primer línea debe ser un hook que detenga el scroll.\n"
+                    f"- Usa espaciado generoso (líneas cortas, saltos frecuentes).\n"
+                    f"- Cierra con una pregunta para generar engagement.\n"
                 ),
                 expected_output=(
-                    "Un resultado completo que incluya análisis o contenido producido, "
-                    "pasos realizados, conclusiones y datos relevantes."
+                    "Dos secciones claramente separadas: "
+                    "'HILO DE X' con 5-8 tweets numerados, y "
+                    "'POST DE LINKEDIN' con el post completo listo para publicar."
                 ),
                 agent=self.specialist,
                 context=[task_planning],
             )
 
-            # ── Task 3: Sentinel revisa ───────────────
+            # ── Task 3: Sentinel revisa calidad ──────
             event_publisher.publish_event(
                 agent="Sentinel",
                 action="revisando",
-                message="Sentinel iniciando revisión de calidad...",
+                message="Sentinel revisando calidad del contenido reciclado...",
                 task_id=self.task_id,
             )
 
             task_review = Task(
                 description=(
-                    f"Revisa exhaustivamente el trabajo completado.\n\n"
-                    f"Requerimiento original:\n"
-                    f"TÍTULO: {title}\n"
-                    f"DESCRIPCIÓN: {description}\n\n"
-                    f"Valida calidad, errores, e inconsistencias."
+                    f"Eres un QA Lead especializado en contenido para redes sociales.\n\n"
+                    f"Revisa el trabajo de Scribe (Hilo de X + Post de LinkedIn) "
+                    f"basado en la transcripción original: '{title}'.\n\n"
+                    f"Tu checklist de validación:\n"
+                    f"1. **Palabras prohibidas**: Rechaza si contiene clichés de IA como: "
+                    f"'Recuerda que', 'En resumen', 'Adéntrate', 'Es importante destacar', "
+                    f"'Cabe mencionar', 'Sin lugar a dudas', 'En definitiva', 'Aprovecha'. "
+                    f"Lista cada palabra prohibida encontrada.\n"
+                    f"2. **Longitud tweets**: Cada tweet debe tener máximo 280 caracteres. "
+                    f"Marca los que excedan el límite.\n"
+                    f"3. **Longitud LinkedIn**: El post debe tener entre 800 y 1500 caracteres. "
+                    f"Indica el conteo exacto.\n"
+                    f"4. **Hooks**: Valida que el primer tweet y la primera línea del post de LinkedIn "
+                    f"sean hooks atrapantes (no genéricos).\n"
+                    f"5. **CTA**: Verifica que el hilo termine con call to action y el post con pregunta.\n"
+                    f"6. **Fidelidad**: Los puntos del contenido deben coincidir con los 3 puntos "
+                    f"clave del Manager. No debe inventar datos.\n\n"
+                    f"Da una calificación final: APROBADO o RECHAZADO con justificación."
                 ),
                 expected_output=(
-                    "Un reporte de QA con validación de requerimientos, "
-                    "errores encontrados, mejoras propuestas y aprobación final."
+                    "Un reporte de QA estructurado con: checklist de validación punto por punto, "
+                    "palabras prohibidas encontradas (si las hay), conteos de caracteres, "
+                    "observaciones de mejora, y veredicto final APROBADO/RECHAZADO."
                 ),
                 agent=self.qa,
                 context=[task_execution],

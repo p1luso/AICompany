@@ -8,19 +8,97 @@ export function Desk({ color = "#a0522d" }: { color?: string }) {
       <rect x="0" y="2" width="20" height="10" fill={color} />
       {/* Top edge (highlight) */}
       <rect x="0" y="2" width="20" height="2" fill="#c47a3a" />
+      {/* Shadow on desk */}
+      <rect x="0" y="10" width="20" height="2" fill="#000" opacity="0.15" />
       {/* Monitor */}
-      <rect x="6" y="0" width="8" height="5" fill="#1565C0" />
+      <rect x="6" y="0" width="8" height="5" fill="#1a1a1a" />
       <rect x="7" y="1" width="6" height="3" fill="#4fc3f7" opacity="0.8" />
+      {/* Screen glare */}
+      <rect x="7" y="1" width="2" height="1" fill="#fff" opacity="0.15" />
       <rect x="9" y="5" width="2" height="2" fill="#616161" />
       {/* Keyboard */}
-      <rect x="5" y="7" width="10" height="3" fill="#424242" />
-      <rect x="6" y="8" width="1" height="1" fill="#616161" />
-      <rect x="8" y="8" width="1" height="1" fill="#616161" />
-      <rect x="10" y="8" width="1" height="1" fill="#616161" />
-      <rect x="12" y="8" width="1" height="1" fill="#616161" />
+      <rect x="5" y="7" width="10" height="3" fill="#333" />
+      <rect x="6" y="8" width="1" height="1" fill="#555" />
+      <rect x="8" y="8" width="1" height="1" fill="#555" />
+      <rect x="10" y="8" width="1" height="1" fill="#555" />
+      <rect x="12" y="8" width="1" height="1" fill="#555" />
+      {/* Mouse */}
+      <rect x="16" y="8" width="2" height="2" fill="#444" />
+      <rect x="16" y="8" width="2" height="1" fill="#555" />
+      {/* Coffee mug on desk */}
+      <rect x="1" y="6" width="3" height="3" fill="#795548" />
+      <rect x="1" y="6" width="3" height="1" fill="#8D6E63" />
       {/* Legs */}
-      <rect x="1" y="12" width="2" height="2" fill="#8B6914" />
-      <rect x="17" y="12" width="2" height="2" fill="#8B6914" />
+      <rect x="1" y="12" width="2" height="2" fill="#6D4C41" />
+      <rect x="17" y="12" width="2" height="2" fill="#6D4C41" />
+    </svg>
+  );
+}
+
+/* ─── WINDOW (wall mounted) ──────────────────── */
+export function Window() {
+  return (
+    <svg viewBox="0 0 16 12" width={48} height={36} style={{ imageRendering: "pixelated" }}>
+      {/* Frame */}
+      <rect x="0" y="0" width="16" height="12" fill="#5D4037" />
+      {/* Glass panes */}
+      <rect x="1" y="1" width="6" height="10" fill="#1565C0" opacity="0.4" />
+      <rect x="9" y="1" width="6" height="10" fill="#1565C0" opacity="0.35" />
+      {/* Center divider */}
+      <rect x="7" y="0" width="2" height="12" fill="#5D4037" />
+      {/* Horizontal divider */}
+      <rect x="0" y="5" width="16" height="2" fill="#5D4037" />
+      {/* Sky light reflection */}
+      <rect x="2" y="2" width="3" height="2" fill="#4fc3f7" opacity="0.3" />
+      <rect x="10" y="2" width="3" height="2" fill="#4fc3f7" opacity="0.2" />
+      {/* Sill */}
+      <rect x="0" y="11" width="16" height="1" fill="#4E342E" />
+    </svg>
+  );
+}
+
+/* ─── WHITEBOARD ─────────────────────────────── */
+export function Whiteboard() {
+  return (
+    <svg viewBox="0 0 20 14" width={60} height={42} style={{ imageRendering: "pixelated" }}>
+      {/* Frame */}
+      <rect x="0" y="0" width="20" height="14" fill="#757575" />
+      {/* White surface */}
+      <rect x="1" y="1" width="18" height="11" fill="#F5F5F5" />
+      {/* Scribbles */}
+      <rect x="2" y="3" width="8" height="1" fill="#E53935" opacity="0.7" />
+      <rect x="2" y="5" width="12" height="1" fill="#1E88E5" opacity="0.6" />
+      <rect x="2" y="7" width="6" height="1" fill="#43A047" opacity="0.7" />
+      <rect x="10" y="7" width="5" height="1" fill="#FF9800" opacity="0.5" />
+      {/* Sticky notes */}
+      <rect x="14" y="2" width="4" height="3" fill="#FFF176" />
+      <rect x="14" y="2" width="4" height="1" fill="#FFD54F" />
+      {/* Marker tray */}
+      <rect x="2" y="12" width="16" height="2" fill="#616161" />
+      <rect x="3" y="12" width="2" height="1" fill="#E53935" />
+      <rect x="6" y="12" width="2" height="1" fill="#1E88E5" />
+      <rect x="9" y="12" width="2" height="1" fill="#212121" />
+    </svg>
+  );
+}
+
+/* ─── WALL CLOCK ─────────────────────────────── */
+export function WallClock() {
+  return (
+    <svg viewBox="0 0 10 10" width={30} height={30} style={{ imageRendering: "pixelated" }}>
+      {/* Face */}
+      <rect x="1" y="1" width="8" height="8" fill="#F5F5F5" />
+      <rect x="0" y="0" width="10" height="10" fill="none" stroke="#424242" strokeWidth="1" />
+      {/* Hour marks */}
+      <rect x="4" y="1" width="2" height="1" fill="#333" />
+      <rect x="4" y="8" width="2" height="1" fill="#333" />
+      <rect x="1" y="4" width="1" height="2" fill="#333" />
+      <rect x="8" y="4" width="1" height="2" fill="#333" />
+      {/* Hands */}
+      <rect x="5" y="3" width="1" height="3" fill="#212121" />
+      <rect x="5" y="5" width="3" height="1" fill="#E53935" />
+      {/* Center */}
+      <rect x="4" y="4" width="2" height="2" fill="#333" />
     </svg>
   );
 }

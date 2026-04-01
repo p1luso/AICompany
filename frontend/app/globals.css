@@ -171,24 +171,73 @@ html, body {
 /* ─── WALKING ANIMATION ───────────────────────── */
 @keyframes pixelWalkCycle {
   0%   { transform: translateY(0); }
-  25%  { transform: translateY(-2px); }
+  25%  { transform: translateY(-3px); }
   50%  { transform: translateY(0); }
-  75%  { transform: translateY(-2px); }
+  75%  { transform: translateY(-3px); }
   100% { transform: translateY(0); }
 }
 
 .walking {
-  animation: pixelWalkCycle 0.4s steps(4) infinite;
+  animation: pixelWalkCycle 0.35s steps(4) infinite;
 }
 
 /* ─── BREATHING IDLE ──────────────────────────── */
 @keyframes pixelBreathe {
   0%, 100% { transform: translateY(0px) scaleY(1); }
-  50%      { transform: translateY(-2px) scaleY(0.98); }
+  50%      { transform: translateY(-1px) scaleY(0.98); }
 }
 
 .idle {
-  animation: pixelBreathe 2.5s ease-in-out infinite;
+  animation: pixelBreathe 3s ease-in-out infinite;
+}
+
+/* ─── IDLE VARIATIONS ────────────────────────── */
+@keyframes idleLookAround {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  20%      { transform: translateY(-1px) translateX(1px); }
+  50%      { transform: translateY(0) translateX(-1px); }
+  70%      { transform: translateY(-1px) translateX(1px); }
+}
+
+.idle-look {
+  animation: idleLookAround 4s ease-in-out infinite;
+}
+
+@keyframes idleTyping {
+  0%, 100% { transform: translateY(0); }
+  10%      { transform: translateY(-1px); }
+  20%      { transform: translateY(0); }
+  30%      { transform: translateY(-1px); }
+  40%      { transform: translateY(0); }
+  50%      { transform: translateY(-1px); }
+  60%      { transform: translateY(0); }
+  70%, 100% { transform: translateY(0); }
+}
+
+.idle-typing {
+  animation: idleTyping 2s steps(1) infinite;
+}
+
+@keyframes idleStretch {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  30%      { transform: translateY(-3px) scaleY(1.03); }
+  60%      { transform: translateY(-2px) scaleY(1.01); }
+}
+
+.idle-stretch {
+  animation: idleStretch 5s ease-in-out infinite;
+}
+
+@keyframes idleNod {
+  0%, 100% { transform: translateY(0); }
+  40%      { transform: translateY(1px); }
+  50%      { transform: translateY(0); }
+  60%      { transform: translateY(1px); }
+  70%      { transform: translateY(0); }
+}
+
+.idle-nod {
+  animation: idleNod 3.5s ease-in-out infinite;
 }
 
 /* ─── REPORT PAPER DROP ───────────────────────── */
@@ -219,4 +268,85 @@ html, body {
 
 .animate-float-bubble {
   animation: floatBubble 3s ease-in-out infinite;
+}
+
+/* ─── ROOM AMBIENT EFFECTS ───────────────────── */
+.room-shadow {
+  box-shadow:
+    inset 0 8px 16px rgba(0, 0, 0, 0.3),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.room-glow-warm {
+  box-shadow:
+    inset 0 0 40px rgba(255, 215, 0, 0.05),
+    inset 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.room-glow-cold {
+  box-shadow:
+    inset 0 0 30px rgba(79, 195, 247, 0.06),
+    inset 0 8px 12px rgba(0, 0, 0, 0.3);
+}
+
+.room-glow-server {
+  box-shadow:
+    inset 0 0 50px rgba(239, 83, 80, 0.08),
+    inset 0 0 30px rgba(57, 255, 20, 0.03),
+    inset 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── WINDOW LIGHT EFFECT ────────────────────── */
+@keyframes windowShimmer {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 0.7; }
+}
+
+.window-light {
+  animation: windowShimmer 6s ease-in-out infinite;
+}
+
+/* ─── CEILING LAMP GLOW ──────────────────────── */
+@keyframes lampGlow {
+  0%, 100% { opacity: 0.04; }
+  50%      { opacity: 0.07; }
+}
+
+.lamp-pool {
+  animation: lampGlow 4s ease-in-out infinite;
+}
+
+/* ─── COFFEE STEAM ───────────────────────────── */
+@keyframes steamRise {
+  0%   { transform: translateY(0) scaleX(1); opacity: 0.6; }
+  50%  { transform: translateY(-6px) scaleX(1.5); opacity: 0.3; }
+  100% { transform: translateY(-12px) scaleX(0.8); opacity: 0; }
+}
+
+.coffee-steam {
+  animation: steamRise 2.5s ease-out infinite;
+}
+
+/* ─── AMBIENT THOUGHT ICONS ──────────────────── */
+@keyframes thoughtPop {
+  0%   { transform: scale(0) translateY(0); opacity: 0; }
+  20%  { transform: scale(1.2) translateY(-2px); opacity: 1; }
+  80%  { transform: scale(1) translateY(0); opacity: 1; }
+  100% { transform: scale(0.8) translateY(2px); opacity: 0; }
+}
+
+.thought-pop {
+  animation: thoughtPop 3s ease-in-out forwards;
+}
+
+/* ─── WALL POSTER ────────────────────────────── */
+.poster {
+  image-rendering: pixelated;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+}
+
+/* ─── FLOOR SHADOWS (under furniture) ────────── */
+.floor-shadow {
+  filter: blur(1px);
+  opacity: 0.15;
 }

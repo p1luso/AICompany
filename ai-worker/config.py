@@ -28,7 +28,11 @@ class Settings(BaseSettings):
 
     # LLM — Ollama (host macOS)
     OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
-    OLLAMA_MODEL: str = "llama3.2"
+
+    # Model Routing: cada agente usa el modelo óptimo para su rol
+    MODEL_MANAGER: str = "llama3.2"    # Razonamiento y planificación
+    MODEL_SCRIBE: str = "mistral"      # Prosa fluida y redacción creativa
+    MODEL_QA: str = "llama3.2"         # Precisión para validar y detectar errores
 
     # CrewAI
     CREW_VERBOSE: bool = True
