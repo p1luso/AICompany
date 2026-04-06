@@ -125,7 +125,7 @@ async def create_task(
     }
 
 
-async def execute_crew_task(
+def execute_crew_task(
     task_id: str, title: str, description: str, priority: str
 ) -> None:
     """

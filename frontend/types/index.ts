@@ -4,7 +4,7 @@
 
 // Evento de un agente
 export interface AgentEvent {
-  agent: "Manager" | "Especialista" | "QA" | "Gateway";
+  agent: string;
   action: string;
   message: string;
   timestamp: string;

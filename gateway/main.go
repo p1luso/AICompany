@@ -290,7 +290,8 @@ func createTask(c *fiber.Ctx) error {
 	}
 
 	taskData, _ := json.Marshal(req)
-	resp, err := http.Post(
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Post(
 		config.AIWorkerURL+"/api/task",
 		"application/json",
 		bytes.NewBuffer(taskData),

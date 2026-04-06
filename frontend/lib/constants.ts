@@ -5,27 +5,27 @@ import { AgentConfig } from "@/types";
 
 export const AGENT_CONFIGS: Record<string, AgentConfig> = {
   Manager: {
-    name: "👨‍💼 Manager",
-    color: "#10b981",
-    bgColor: "bg-emerald-900/20",
-    avatar: "👨‍💼",
+    name: "Alice",
+    color: "#4fc3f7",
+    bgColor: "#4fc3f710",
+    avatar: "🔍",
   },
-  Especialista: {
-    name: "👨‍💻 Especialista",
-    color: "#3b82f6",
-    bgColor: "bg-blue-900/20",
-    avatar: "👨‍💻",
+  Scribe: {
+    name: "Scribe",
+    color: "#81c784",
+    bgColor: "#81c78410",
+    avatar: "✍️",
   },
-  QA: {
-    name: "✅ QA/Reviewer",
-    color: "#f59e0b",
-    bgColor: "bg-amber-900/20",
-    avatar: "✅",
+  Sentinel: {
+    name: "Sentinel",
+    color: "#ef5350",
+    bgColor: "#ef535010",
+    avatar: "🛡️",
   },
   Gateway: {
-    name: "🌐 Gateway",
-    color: "#8b5cf6",
-    bgColor: "bg-purple-900/20",
+    name: "Gateway",
+    color: "#ce93d8",
+    bgColor: "#ce93d810",
     avatar: "🌐",
   },
 };

@@ -1,9 +1,12 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { useAgentTracker } from "@/hooks/useAgentTracker";
 import { AGENT_CONFIG } from "./PixelOffice/Agent";
 import { PixelOffice } from "./PixelOffice";
 import { MemoryViewer } from "./MemoryViewer";
+import { TerminalLogs } from "./TerminalLogs";
+import { TaskModal } from "./TaskModal";
 
 /* ─── AGENT STATUS BADGE ─────────────────────────────── */
 function StatusBadge({ id }: { id: "alice" | "scribe" | "sentinel" }) {
@@ -58,9 +61,39 @@ function PixelClock() {
 /* ─── MISSION CONTROL ────────────────────────────────── */
 export function MissionControl() {
   const agents = useAgentTracker();
+  const [terminalOpen, setTerminalOpen] = useState(false);
+  const [taskModalOpen, setTaskModalOpen] = useState(false);
+
+  const { startTypingLoop, stopTypingLoop, playSuccess, unlockAudio } = require("@/lib/audio");
+  const prevActiveCount = useRef(0);
+
+  useEffect(() => {
+    const activeCount = agents.filter(a => a.state === "active").length;
+    
+    if (activeCount > 0) {
+      startTypingLoop();
+    } else {
+      stopTypingLoop();
+      // If we just finished having active agents, play success jingle
+      if (prevActiveCount.current > 0 && activeCount === 0) {
+        playSuccess();
+      }
+    }
+    prevActiveCount.current = activeCount;
+  }, [agents, startTypingLoop, stopTypingLoop, playSuccess]);
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-pixel-bg">
+    <div 
+      className="flex flex-col h-screen w-screen overflow-hidden bg-pixel-bg"
+      onClick={() => {
+        try { unlockAudio(); } catch (e) {}
+      }}
+    >
+
+      {/* MODALS */}
+      <TerminalLogs open={terminalOpen} onClose={() => setTerminalOpen(false)} />
+      <TaskModal open={taskModalOpen} onClose={() => setTaskModalOpen(false)} />
+      <MemoryViewer />
 
       {/* ══════════════════════════════════════════
           HEADER BAR
@@ -126,12 +159,11 @@ export function MissionControl() {
          ══════════════════════════════════════════ */}
       <div className="flex flex-1 overflow-hidden gap-0">
 
-        {/* ── LEFT: OFFICE VIEWPORT ─────────────── */}
+        {/* ── CENTRAL: OFFICE VIEWPORT ─────────────── */}
         <div
           className="relative flex-1 overflow-hidden"
           style={{ borderRight: "4px solid #0f3460" }}
         >
-          {/* Viewport label */}
           <div
             className="absolute top-2 right-3 z-10 font-pixel"
             style={{
@@ -144,13 +176,11 @@ export function MissionControl() {
           >
             ISOMETRIC VIEW v1.0
           </div>
-
-          <PixelOffice agents={agents} />
-        </div>
-
-        {/* ── RIGHT: MEMORY VIEWER ──────────────── */}
-        <div style={{ width: "280px", minWidth: "280px" }}>
-          <MemoryViewer />
+          <PixelOffice
+            agents={agents}
+            onOpenTerminal={() => setTerminalOpen(true)}
+            onOpenTaskModal={() => setTaskModalOpen(true)}
+          />
         </div>
       </div>
 

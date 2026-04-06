@@ -79,8 +79,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://gateway:8000
-      - NEXT_PUBLIC_WS_URL=ws://gateway:8000/ws
+      # NEXT_PUBLIC_ vars se incrustan en build time para el browser del usuario
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000/ws
       - NODE_ENV=production
       - MEMORY_PATH=/memory
     depends_on:

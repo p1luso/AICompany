@@ -141,10 +141,41 @@ function SentinelSprite({ walking }: { walking: boolean }) {
 }
 
 /* ─── AGENT CONFIG ───────────────────────────────────────────── */
+
+/* Idle animation classes per agent — cycles between these at desk */
+const IDLE_BEHAVIORS: Record<string, { animations: string[]; icons: string[] }> = {
+  alice: {
+    animations: ["idle", "idle-look", "idle-typing", "idle"],
+    icons: ["🔍", "💡", "📊", "🤔"],
+  },
+  scribe: {
+    animations: ["idle", "idle-typing", "idle-nod", "idle-stretch"],
+    icons: ["✍️", "📝", "💬", "✨"],
+  },
+  sentinel: {
+    animations: ["idle", "idle-look", "idle-nod", "idle"],
+    icons: ["🛡️", "🔎", "⚠️", "✅"],
+  },
+};
+
+/* Waypoint-specific icons */
+const WAYPOINT_ICONS: Record<string, string> = {
+  coffee: "☕",
+  water: "💧",
+  books: "📚",
+  report: "📋",
+  server1: "🔧",
+  server2: "💾",
+  switch: "🔌",
+  whiteboard: "🖊️",
+  window: "🌤️",
+  plant: "🌱",
+};
+
 export const AGENT_CONFIG = {
   alice: {
     name:   "Alice",
-    label:  "Research Lead",
+    label:  "Manager",
     color:  "#4fc3f7",
     emoji:  "🔍",
     sprite: AliceSprite,
@@ -175,18 +206,43 @@ export function Agent({ id, state }: AgentProps) {
   const config = AGENT_CONFIG[id];
   const agentWaypoints = WAYPOINTS[id];
   const deskWaypoint = agentWaypoints.desk;
+  const behaviors = IDLE_BEHAVIORS[id];
 
   const [currentPos, setCurrentPos] = useState<Waypoint>(deskWaypoint);
   const [isAmbientWalking, setIsAmbientWalking] = useState(false);
   const [ambientIcon, setAmbientIcon] = useState<string | null>(null);
-  
+  const [idleAnim, setIdleAnim] = useState("idle");
+  const [atDesk, setAtDesk] = useState(true);
+
   const SpriteComponent = config.sprite;
-  
-  // State priorities
+
   const isActive = state === "active";
-  const isWalking = isAmbientWalking || isActive; // "active" agents are always "at desk" in this simple layout but could be walking to it 
-  
+  const isWalking = isAmbientWalking;
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const idleCycleRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Desk idle animation cycling — switches between idle variants
+  useEffect(() => {
+    if (!isActive && atDesk && !isAmbientWalking) {
+      let idx = 0;
+      const cycle = () => {
+        idx = (idx + 1) % behaviors.animations.length;
+        setIdleAnim(behaviors.animations[idx]);
+        // Occasionally show a thought icon at desk
+        if (Math.random() > 0.6) {
+          setAmbientIcon(behaviors.icons[idx]);
+          setTimeout(() => setAmbientIcon(null), 2500);
+        }
+        idleCycleRef.current = setTimeout(cycle, 4000 + Math.random() * 3000);
+      };
+      idleCycleRef.current = setTimeout(cycle, 3000 + Math.random() * 4000);
+      return () => { if (idleCycleRef.current) clearTimeout(idleCycleRef.current); };
+    } else {
+      setIdleAnim("idle");
+      if (idleCycleRef.current) clearTimeout(idleCycleRef.current);
+    }
+  }, [isActive, atDesk, isAmbientWalking, behaviors]);
 
   // Wandering Logic
   useEffect(() => {
@@ -195,42 +251,47 @@ export function Agent({ id, state }: AgentProps) {
       if (timerRef.current) clearTimeout(timerRef.current);
       setAmbientIcon(null);
       setIsAmbientWalking(true);
+      setAtDesk(false);
       setCurrentPos(deskWaypoint);
-      
-      const t = setTimeout(() => setIsAmbientWalking(false), 800); // Fast walk to desk
+
+      const t = setTimeout(() => {
+        setIsAmbientWalking(false);
+        setAtDesk(true);
+      }, 800);
       return () => clearTimeout(t);
     } else {
       // IDLE WANDERING ROUTINE
       const startWandering = () => {
-        const waitTime = Math.floor(Math.random() * (40000 - 15000) + 15000); // 15-40s
-        
+        const waitTime = Math.floor(Math.random() * (30000 - 12000) + 12000); // 12-30s
+
         timerRef.current = setTimeout(() => {
-          // Choose random waypoint that isn't the desk
           const keys = Object.keys(agentWaypoints).filter(k => k !== 'desk');
           const randomKey = keys[Math.floor(Math.random() * keys.length)];
           const target = agentWaypoints[randomKey];
 
           // Walk to target
+          setAtDesk(false);
           setIsAmbientWalking(true);
           setCurrentPos(target);
-          
-          // Stay there for a few seconds
+
+          // Arrive at destination
           setTimeout(() => {
             setIsAmbientWalking(false);
-            // Change icon occasionally while idle at waypoint
-            if (randomKey === 'coffee') setAmbientIcon("☕");
-            else if (Math.random() > 0.5) setAmbientIcon("💭");
+            // Show context-appropriate icon
+            setAmbientIcon(WAYPOINT_ICONS[randomKey] || "💭");
 
-            // After 5 seconds, walk back to desk or elsewhere
+            // Linger 4-8 seconds
+            const lingerTime = 4000 + Math.random() * 4000;
             setTimeout(() => {
               setAmbientIcon(null);
               setIsAmbientWalking(true);
               setCurrentPos(deskWaypoint);
               setTimeout(() => {
                 setIsAmbientWalking(false);
-                startWandering(); // Loop
+                setAtDesk(true);
+                startWandering();
               }, 1200);
-            }, 6000);
+            }, lingerTime);
           }, 1200);
         }, waitTime);
       };
@@ -245,10 +306,10 @@ export function Agent({ id, state }: AgentProps) {
   return (
     <div
       className="absolute flex flex-col items-center pointer-events-none"
-      style={{ 
-        bottom: `${currentPos.y}px`, 
+      style={{
+        bottom: `${currentPos.y}px`,
         left: `${currentPos.x}px`,
-        transition: isActive ? "all 0.8s ease-in" : "all 1.2s ease-in-out",
+        transition: isActive ? "all 0.8s ease-in" : "all 1.4s ease-in-out",
         zIndex: 50
       }}
     >
@@ -260,14 +321,26 @@ export function Agent({ id, state }: AgentProps) {
               {config.emoji} <span className="typing-dots" />
             </span>
           ) : (
-            ambientIcon
+            <span className="thought-pop">{ambientIcon}</span>
           )}
         </div>
       )}
 
-      {/* Sprite */}
-      <div className={isWalking ? "walking" : "idle"}>
-        <SpriteComponent walking={isWalking} />
+      {/* Sprite with shadow */}
+      <div className="relative">
+        <div className={isWalking ? "walking" : idleAnim}>
+          <SpriteComponent walking={isWalking} />
+        </div>
+        {/* Floor shadow */}
+        <div
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2"
+          style={{
+            width: isWalking ? "28px" : "24px",
+            height: "6px",
+            background: "radial-gradient(ellipse, rgba(0,0,0,0.3) 0%, transparent 70%)",
+            transition: "width 0.3s",
+          }}
+        />
       </div>
 
       {/* Name tag */}
@@ -284,15 +357,23 @@ export function Agent({ id, state }: AgentProps) {
         {config.name}
       </div>
 
-      {/* Status dot */}
-      <div
-        className="w-2 h-2 mt-0.5"
-        style={{ 
-          background: isActive ? "#39ff14" : "#555", 
-          boxShadow: isActive ? "0 0 6px #39ff14" : "none",
-          borderRadius: "50%"
-        }}
-      />
+      {/* Status indicator */}
+      <div className="flex items-center gap-0.5 mt-0.5">
+        <div
+          style={{
+            width: "5px",
+            height: "5px",
+            background: isActive ? "#39ff14" : "#555",
+            boxShadow: isActive ? "0 0 6px #39ff14" : "none",
+            borderRadius: "50%",
+          }}
+        />
+        {isActive && (
+          <span className="font-pixel" style={{ fontSize: "5px", color: "#39ff14" }}>
+            BUSY
+          </span>
+        )}
+      </div>
     </div>
   );
 }

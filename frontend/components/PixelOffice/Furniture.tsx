@@ -179,22 +179,39 @@ export function ServerRack() {
   return (
     <svg viewBox="0 0 16 24" width={48} height={72} style={{ imageRendering: "pixelated" }}>
       {/* Cabinet */}
-      <rect x="0" y="0" width="16" height="24" fill="#212121" />
-      <rect x="1" y="1" width="14" height="22" fill="#1a1a1a" />
+      <rect x="0" y="0" width="16" height="24" fill="#1a1a1a" />
+      <rect x="0" y="0" width="16" height="1" fill="#333" />
+      <rect x="0" y="0" width="1" height="24" fill="#2a2a2a" />
+      <rect x="15" y="0" width="1" height="24" fill="#111" />
       {/* Server units */}
       {[0,1,2,3,4].map((i) => (
         <g key={i}>
-          <rect x="2" y={2 + i*4} width="12" height="3" fill="#303030" />
+          <rect x="2" y={2 + i*4} width="12" height="3" fill="#282828" />
+          <rect x="2" y={2 + i*4} width="12" height="1" fill="#333" />
+          {/* Status LEDs */}
           <rect x="3" y={3 + i*4} width="1" height="1" fill="#39ff14"
             style={{ animation: `serverBlink ${1 + i * 0.3}s step-end infinite` }} />
-          <rect x="5" y={3 + i*4} width="1" height="1" fill="#ef5350"
+          <rect x="5" y={3 + i*4} width="1" height="1" fill="#4fc3f7"
+            style={{ animation: `serverBlink ${0.9 + i * 0.25}s step-end infinite` }} />
+          <rect x="7" y={3 + i*4} width="1" height="1" fill="#ef5350"
             style={{ animation: `serverBlink ${0.7 + i * 0.2}s step-end infinite` }} />
-          <rect x="7" y={3 + i*4} width="5" height="1" fill="#424242" />
+          {/* Drive bays */}
+          <rect x="9" y={3 + i*4} width="2" height="1" fill="#1a1a1a" />
+          <rect x="12" y={3 + i*4} width="2" height="1" fill="#1a1a1a" />
         </g>
       ))}
+      {/* Cables dangling from side */}
+      <rect x="15" y="4" width="1" height="3" fill="#ef5350" opacity="0.6" />
+      <rect x="15" y="8" width="1" height="4" fill="#4fc3f7" opacity="0.6" />
+      <rect x="15" y="14" width="1" height="3" fill="#39ff14" opacity="0.6" />
+      {/* Ventilation */}
+      <rect x="4" y="22" width="8" height="1" fill="#222" />
+      <rect x="5" y="22" width="1" height="1" fill="#2a2a2a" />
+      <rect x="7" y="22" width="1" height="1" fill="#2a2a2a" />
+      <rect x="9" y="22" width="1" height="1" fill="#2a2a2a" />
       {/* Feet */}
-      <rect x="2" y="22" width="3" height="2" fill="#424242" />
-      <rect x="11" y="22" width="3" height="2" fill="#424242" />
+      <rect x="1" y="23" width="3" height="1" fill="#333" />
+      <rect x="12" y="23" width="3" height="1" fill="#333" />
     </svg>
   );
 }
@@ -220,20 +237,34 @@ export function Plant() {
 /* ─── COFFEE MACHINE ────────────────────────── */
 export function CoffeeMachine() {
   return (
-    <svg viewBox="0 0 10 12" width={30} height={36} style={{ imageRendering: "pixelated" }}>
-      {/* Body */}
-      <rect x="1" y="0" width="8" height="12" fill="#424242" />
-      <rect x="2" y="1" width="6" height="3" fill="#616161" />
-      {/* Buttons */}
-      <rect x="3" y="2" width="1" height="1" fill="#ef5350" />
-      <rect x="5" y="2" width="1" height="1" fill="#39ff14" />
-      {/* Dispenser Area */}
-      <rect x="2" y="5" width="6" height="5" fill="#212121" />
-      {/* Cup placeholder */}
-      <rect x="4" y="8" width="2" height="2" fill="#EEEEEE" />
-      {/* Steam (animated via CSS in real usage or just static) */}
-      <rect x="4" y="3" width="1" height="1" fill="#fff" opacity="0.4" />
-    </svg>
+    <div className="relative">
+      {/* Steam particles */}
+      <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex gap-0.5">
+        <div className="w-1 h-1 bg-white rounded-full coffee-steam" style={{ animationDelay: "0s" }} />
+        <div className="w-1 h-1 bg-white rounded-full coffee-steam" style={{ animationDelay: "0.8s" }} />
+        <div className="w-1 h-1 bg-white rounded-full coffee-steam" style={{ animationDelay: "1.6s" }} />
+      </div>
+      <svg viewBox="0 0 10 12" width={30} height={36} style={{ imageRendering: "pixelated" }}>
+        {/* Body */}
+        <rect x="1" y="0" width="8" height="12" fill="#424242" />
+        <rect x="2" y="1" width="6" height="3" fill="#555" />
+        {/* Brand stripe */}
+        <rect x="2" y="0" width="6" height="1" fill="#795548" />
+        {/* Buttons */}
+        <rect x="3" y="2" width="1" height="1" fill="#ef5350" />
+        <rect x="5" y="2" width="1" height="1" fill="#39ff14" />
+        <rect x="7" y="2" width="1" height="1" fill="#4fc3f7" />
+        {/* Dispenser Area */}
+        <rect x="2" y="5" width="6" height="5" fill="#1a1a1a" />
+        {/* Cup */}
+        <rect x="3" y="7" width="4" height="3" fill="#EEEEEE" />
+        <rect x="3" y="7" width="4" height="1" fill="#E0E0E0" />
+        {/* Coffee in cup */}
+        <rect x="4" y="8" width="2" height="1" fill="#4E342E" />
+        {/* Base */}
+        <rect x="0" y="11" width="10" height="1" fill="#333" />
+      </svg>
+    </div>
   );
 }
 
