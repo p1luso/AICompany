@@ -22,11 +22,11 @@ export function Sidebar() {
           <div className="flex-1 h-1 bg-[#051122] rounded-full overflow-hidden">
             <div 
               className="h-full bg-[#39ff14] transition-all duration-500"
-              style={{ width: `${(activeCount / 3) * 100}%` }}
+              style={{ width: `${(activeCount / 6) * 100}%` }}
             />
           </div>
           <span className="font-pixel text-[10px] text-[#39ff14] whitespace-nowrap">
-            {activeCount}/3 ACTIVE
+            {activeCount}/6 ACTIVE
           </span>
         </div>
       </div>

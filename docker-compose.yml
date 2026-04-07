@@ -33,6 +33,8 @@ services:
       - MODEL_MANAGER=llama3.2
       - MODEL_SCRIBE=mistral
       - MODEL_QA=llama3.2
+      - MODEL_DEV=qwen2.5-coder
+      - MODEL_TESTER=qwen2.5-coder
       # Ruta donde los agentes escriben outputs .md
       - MEMORY_OUTPUT_PATH=/memory
     depends_on:

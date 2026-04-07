@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     MODEL_MANAGER: str = "llama3.2"    # Razonamiento y planificación
     MODEL_SCRIBE: str = "mistral"      # Prosa fluida y redacción creativa
     MODEL_QA: str = "llama3.2"         # Precisión para validar y detectar errores
+    MODEL_DEV: str = "qwen2.5-coder"   # Generación de código y terminal
+    MODEL_TESTER: str = "qwen2.5-coder" # Testing automatizado y validación técnica
+    MODEL_DESIGNER: str = "mistral"    # Estética y creatividad visual
 
     # CrewAI
     CREW_VERBOSE: bool = True

@@ -12,7 +12,7 @@ import { Sidebar } from "./Sidebar";
 import { KanbanBoard } from "../panels/KanbanBoard";
 
 /* ─── AGENT STATUS BADGE ─────────────────────────────── */
-function StatusBadge({ id }: { id: "alice" | "scribe" | "sentinel" }) {
+function StatusBadge({ id }: { id: "alice" | "scribe" | "sentinel" | "atlas" | "luna" | "nova" }) {
   const agentsStatus = useAgentStore((state) => state.agents);
   const agent = agentsStatus[Object.keys(agentsStatus).find(k => k.toLowerCase() === id) || ""];
   const config = AGENT_CONFIG[id];
@@ -125,6 +125,9 @@ export function MissionControl() {
           <StatusBadge id="alice" />
           <StatusBadge id="scribe" />
           <StatusBadge id="sentinel" />
+          <StatusBadge id="atlas" />
+          <StatusBadge id="luna" />
+          <StatusBadge id="nova" />
         </div>
 
         <div className="ml-auto flex items-center gap-4">

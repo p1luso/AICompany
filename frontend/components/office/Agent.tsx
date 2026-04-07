@@ -6,48 +6,29 @@ import { WAYPOINTS, Waypoint } from "./config";
 
 /* ─────────────────────────────────────────────────────────────
    SVG PIXEL ART SPRITES (12×16 grid, each unit = 4px rendered)
-   Alice    → Blue hoodie  / Brown hair / Glasses
-   Scribe   → Green sweater / Dark bun
-   Sentinel → Red jacket   / Spiky black hair
-   ──────────────────────────────────────────────────────────────── */
+   ───────────────────────────────────────────────────────────── */
 
 function AliceSprite({ walking }: { walking: boolean }) {
   return (
-    <svg
-      viewBox="0 0 12 16"
-      width={walking ? 40 : 36}
-      height={walking ? 56 : 52}
-      style={{ imageRendering: "pixelated" }}
-    >
-      {/* Hair */}
+    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
       <rect x="2" y="0" width="8" height="1" fill="#5D4037" />
       <rect x="1" y="1" width="10" height="2" fill="#5D4037" />
       <rect x="0" y="3" width="2" height="3" fill="#5D4037" />
       <rect x="10" y="3" width="2" height="3" fill="#5D4037" />
-      {/* Face */}
       <rect x="2" y="3" width="8" height="5" fill="#FFDCC4" />
-      {/* Glasses */}
       <rect x="2" y="4" width="3" height="2" fill="none" stroke="#1565C0" strokeWidth="0.4" />
       <rect x="7" y="4" width="3" height="2" fill="none" stroke="#1565C0" strokeWidth="0.4" />
-      <rect x="5" y="5" width="2" height="1" fill="#1565C0" opacity="0.6" />
-      {/* Eyes */}
       <rect x="3" y="5" width="1" height="1" fill="#1565C0" />
       <rect x="8" y="5" width="1" height="1" fill="#1565C0" />
-      {/* Mouth */}
       <rect x="4" y="7" width="4" height="1" fill="#E57373" />
-      {/* Body – blue hoodie */}
       <rect x="2" y="8" width="8" height="5" fill="#1565C0" />
       <rect x="0" y="9" width="2" height="4" fill="#1565C0" />
       <rect x="10" y="9" width="2" height="4" fill="#1565C0" />
-      {/* Hands */}
       <rect x="0" y="13" width="2" height="1" fill="#FFDCC4" />
       <rect x="10" y="13" width="2" height="1" fill="#FFDCC4" />
-      {/* Legs */}
       <rect x="3" y="13" width="2" height="3" fill="#37474F" />
       <rect x="7" y="13" width="2" height="3" fill="#37474F" />
-      {/* Walk cycle offset on legs */}
       {walking && <rect x="3" y="15" width="2" height="1" fill="#37474F" transform="translate(0,-1)" />}
-      {/* Shoes */}
       <rect x="2" y="15" width="3" height="1" fill="#212121" />
       <rect x="7" y="15" width="3" height="1" fill="#212121" />
     </svg>
@@ -56,40 +37,24 @@ function AliceSprite({ walking }: { walking: boolean }) {
 
 function ScribeSprite({ walking }: { walking: boolean }) {
   return (
-    <svg
-      viewBox="0 0 12 16"
-      width={walking ? 40 : 36}
-      height={walking ? 56 : 52}
-      style={{ imageRendering: "pixelated" }}
-    >
-      {/* Hair bun */}
+    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
       <rect x="3" y="0" width="6" height="1" fill="#3E2723" />
       <rect x="2" y="1" width="8" height="3" fill="#3E2723" />
-      <rect x="4" y="0" width="4" height="1" fill="#4E342E" />
-      {/* Face */}
       <rect x="2" y="4" width="8" height="5" fill="#C68642" />
-      {/* Eyes */}
       <rect x="3" y="5" width="2" height="1" fill="#4E342E" />
       <rect x="7" y="5" width="2" height="1" fill="#4E342E" />
-      {/* Smile */}
       <rect x="4" y="7" width="1" height="1" fill="#A0522D" />
       <rect x="5" y="8" width="2" height="1" fill="#A0522D" />
-      <rect x="7" y="7" width="1" height="1" fill="#A0522D" />
-      {/* Body – green sweater */}
       <rect x="2" y="9" width="8" height="5" fill="#2E7D32" />
       <rect x="0" y="10" width="2" height="4" fill="#2E7D32" />
       <rect x="10" y="10" width="2" height="4" fill="#2E7D32" />
-      {/* Pen in hand */}
       <rect x="10" y="11" width="1" height="3" fill="#FFF9C4" />
       <rect x="10" y="14" width="1" height="1" fill="#F57F17" />
-      {/* Hands */}
       <rect x="0" y="13" width="2" height="1" fill="#C68642" />
       <rect x="10" y="13" width="1" height="1" fill="#C68642" />
-      {/* Legs */}
       <rect x="3" y="14" width="2" height="2" fill="#5D4037" />
       <rect x="7" y="14" width="2" height="2" fill="#5D4037" />
       {walking && <rect x="3" y="14" width="2" height="1" fill="#5D4037" transform="translate(0,1)" />}
-      {/* Shoes */}
       <rect x="2" y="15" width="3" height="1" fill="#212121" />
       <rect x="7" y="15" width="3" height="1" fill="#212121" />
     </svg>
@@ -98,51 +63,115 @@ function ScribeSprite({ walking }: { walking: boolean }) {
 
 function SentinelSprite({ walking }: { walking: boolean }) {
   return (
-    <svg
-      viewBox="0 0 12 16"
-      width={walking ? 40 : 36}
-      height={walking ? 56 : 52}
-      style={{ imageRendering: "pixelated" }}
-    >
-      {/* Spiky hair */}
+    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
       <rect x="2" y="0" width="2" height="1" fill="#212121" />
       <rect x="5" y="0" width="2" height="1" fill="#212121" />
       <rect x="8" y="0" width="2" height="1" fill="#212121" />
       <rect x="1" y="1" width="10" height="3" fill="#212121" />
-      <rect x="3" y="1" width="1" height="1" fill="#424242" />
-      <rect x="7" y="1" width="1" height="1" fill="#424242" />
-      {/* Face */}
       <rect x="2" y="4" width="8" height="5" fill="#8D5524" />
-      {/* Eyes – stern */}
       <rect x="3" y="5" width="2" height="1" fill="#212121" />
       <rect x="7" y="5" width="2" height="1" fill="#212121" />
-      <rect x="3" y="4" width="2" height="1" fill="#212121" />
-      <rect x="7" y="4" width="2" height="1" fill="#212121" />
-      {/* Flat mouth */}
       <rect x="4" y="7" width="4" height="1" fill="#6D4C41" />
-      {/* Body – red jacket */}
       <rect x="2" y="9" width="8" height="5" fill="#B71C1C" />
       <rect x="0" y="9" width="2" height="5" fill="#B71C1C" />
       <rect x="10" y="9" width="2" height="5" fill="#B71C1C" />
-      {/* Jacket collar/stripe */}
       <rect x="5" y="9" width="2" height="5" fill="#D32F2F" />
-      {/* Hands */}
       <rect x="0" y="13" width="2" height="1" fill="#8D5524" />
       <rect x="10" y="13" width="2" height="1" fill="#8D5524" />
-      {/* Legs */}
       <rect x="3" y="14" width="2" height="2" fill="#1A237E" />
       <rect x="7" y="14" width="2" height="2" fill="#1A237E" />
       {walking && <rect x="7" y="14" width="2" height="1" fill="#1A237E" transform="translate(0,1)" />}
-      {/* Shoes */}
       <rect x="2" y="15" width="3" height="1" fill="#000" />
       <rect x="7" y="15" width="3" height="1" fill="#000" />
     </svg>
   );
 }
 
+function AtlasSprite({ walking }: { walking: boolean }) {
+  return (
+    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+      {/* Messy blonde hair */}
+      <rect x="1" y="0" width="10" height="4" fill="#FFD54F" />
+      <rect x="0" y="1" width="2" height="2" fill="#FFD54F" />
+      <rect x="10" y="1" width="2" height="2" fill="#FFD54F" />
+      {/* Face */}
+      <rect x="2" y="4" width="8" height="5" fill="#FFDCC4" />
+      {/* Headset */}
+      <rect x="1" y="4" width="1" height="3" fill="#333" />
+      <rect x="1" y="4" width="10" height="1" fill="#333" />
+      <rect x="10" y="4" width="1" height="3" fill="#333" />
+      {/* Eyes */}
+      <rect x="3" y="6" width="1" height="1" fill="#333" />
+      <rect x="8" y="6" width="1" height="1" fill="#333" />
+      {/* Body - Orange Hoodie */}
+      <rect x="2" y="9" width="8" height="5" fill="#EF6C00" />
+      <rect x="0" y="10" width="12" height="4" fill="#EF6C00" />
+      <rect x="4" y="9" width="4" height="2" fill="#FB8C00" />
+      {/* Hands */}
+      <rect x="0" y="14" width="2" height="1" fill="#FFDCC4" />
+      <rect x="10" y="14" width="2" height="1" fill="#FFDCC4" />
+      {/* Legs - Jeans */}
+      <rect x="3" y="14" width="2" height="2" fill="#1565C0" />
+      <rect x="7" y="14" width="2" height="2" fill="#1565C0" />
+      {walking && <rect x="3" y="14" width="2" height="1" fill="#1565C0" transform="translate(0,2)" />}
+      <rect x="2" y="15" width="3" height="1" fill="#212121" />
+      <rect x="7" y="15" width="3" height="1" fill="#212121" />
+    </svg>
+  );
+}
+
+function LunaSprite({ walking }: { walking: boolean }) {
+  return (
+    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+      {/* Long dark hair with purple highlight */}
+      <rect x="1" y="0" width="10" height="12" fill="#212121" />
+      <rect x="9" y="4" width="1" height="6" fill="#BA68C8" />
+      {/* Face */}
+      <rect x="2" y="3" width="8" height="5" fill="#F5CBA7" />
+      <rect x="3" y="5" width="1" height="1" fill="#1B2631" />
+      <rect x="8" y="5" width="1" height="1" fill="#1B2631" />
+      {/* Body - Purple Jacket */}
+      <rect x="2" y="8" width="8" height="6" fill="#6A1B9A" />
+      <rect x="0" y="9" width="2" height="5" fill="#6A1B9A" />
+      <rect x="10" y="9" width="2" height="5" fill="#6A1B9A" />
+      {/* Magnifying glass in hand */}
+      <circle cx="1" cy="14" r="1.5" fill="#BDBDBD" />
+      {/* Legs */}
+      <rect x="3" y="14" width="2" height="2" fill="#212121" />
+      <rect x="7" y="14" width="2" height="2" fill="#212121" />
+      {walking && <rect x="7" y="14" width="2" height="1" fill="#212121" transform="translate(0,1)" />}
+      <rect x="2" y="15" width="3" height="1" fill="#333" />
+      <rect x="7" y="15" width="3" height="1" fill="#333" />
+    </svg>
+  );
+}
+
+function NovaSprite({ walking }: { walking: boolean }) {
+  return (
+    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+      {/* Cyan/Pink artistic hair */}
+      <rect x="1" y="0" width="5" height="4" fill="#00BCD4" />
+      <rect x="6" y="0" width="5" height="4" fill="#E91E63" />
+      <rect x="0" y="1" width="1" height="6" fill="#00BCD4" />
+      {/* Face */}
+      <rect x="2" y="3" width="8" height="5" fill="#FFE0B2" />
+      <rect x="3" y="5" width="2" height="1" fill="#333" />
+      <rect x="7" y="5" width="2" height="1" fill="#333" />
+      {/* Body - Stylish Teal Outfit */}
+      <rect x="2" y="8" width="8" height="6" fill="#008080" />
+      <rect x="1" y="9" width="10" height="1" fill="#FFEB3B" opacity="0.4" />
+      {/* Stylus in hand */}
+      <rect x="10" y="12" width="1" height="3" fill="#FFF" />
+      {/* Legs */}
+      <rect x="3" y="14" width="2" height="2" fill="#FFF" />
+      <rect x="7" y="14" width="2" height="2" fill="#FFF" />
+      {walking && <rect x="3" y="14" width="2" height="1" fill="#FFF" transform="translate(0,2)" />}
+    </svg>
+  );
+}
+
 /* ─── AGENT CONFIG ───────────────────────────────────────────── */
 
-/* Idle animation classes per agent — cycles between these at desk */
 const IDLE_BEHAVIORS: Record<string, { animations: string[]; icons: string[] }> = {
   alice: {
     animations: ["idle", "idle-look", "idle-typing", "idle"],
@@ -153,12 +182,23 @@ const IDLE_BEHAVIORS: Record<string, { animations: string[]; icons: string[] }> 
     icons: ["✍️", "📝", "💬", "✨"],
   },
   sentinel: {
-    animations: ["idle", "idle-look", "idle-nod", "idle"],
-    icons: ["🛡️", "🔎", "⚠️", "✅"],
+    animations: ["idle", "idle-look", "idle-security-scan", "idle"],
+    icons: ["🛡️", "🔎", "⚠️", "📡"],
+  },
+  atlas: {
+    animations: ["idle", "idle-typing", "idle-debugging", "idle-stretch"],
+    icons: ["⚙️", "💻", "🔥", "🚀"],
+  },
+  luna: {
+    animations: ["idle", "idle-look", "idle-nod", "idle-check"],
+    icons: ["🧪", "🔎", "✅", "🐞"],
+  },
+  nova: {
+    animations: ["idle", "idle-sketching", "idle-look", "idle-stretch"],
+    icons: ["🎨", "✨", "📐", "💅"],
   },
 };
 
-/* Waypoint-specific icons */
 const WAYPOINT_ICONS: Record<string, string> = {
   coffee: "☕",
   water: "💧",
@@ -166,6 +206,7 @@ const WAYPOINT_ICONS: Record<string, string> = {
   report: "📋",
   server1: "🔧",
   server2: "💾",
+  server3: "🔋",
   switch: "🔌",
   whiteboard: "🖊️",
   window: "🌤️",
@@ -175,30 +216,51 @@ const WAYPOINT_ICONS: Record<string, string> = {
 export const AGENT_CONFIG = {
   alice: {
     name:   "Alice",
-    label:  "Manager",
+    label:  "CEO",
     color:  "#4fc3f7",
     emoji:  "🔍",
     sprite: AliceSprite,
   },
   scribe: {
     name:   "Scribe",
-    label:  "Copywriter",
+    label:  "Marketing",
     color:  "#81c784",
     emoji:  "✍️",
     sprite: ScribeSprite,
   },
   sentinel: {
     name:   "Sentinel",
-    label:  "QA Lead",
+    label:  "Infra",
     color:  "#ef5350",
     emoji:  "🛡️",
     sprite: SentinelSprite,
+  },
+  atlas: {
+    name:   "Atlas",
+    label:  "Lead Dev",
+    color:  "#ff9800",
+    emoji:  "💻",
+    sprite: AtlasSprite,
+  },
+  luna: {
+    name:   "Luna",
+    label:  "QA Specialist",
+    color:  "#ab47bc",
+    emoji:  "🧪",
+    sprite: LunaSprite,
+  },
+  nova: {
+    name:   "Nova",
+    label:  "Lead Designer",
+    color:  "#00bcd4",
+    emoji:  "🎨",
+    sprite: NovaSprite,
   },
 } as const;
 
 /* ─── AGENT COMPONENT ────────────────────────────────────────── */
 interface AgentProps {
-  id: "alice" | "scribe" | "sentinel";
+  id: keyof typeof AGENT_CONFIG;
   state: AgentState;
 }
 
@@ -222,14 +284,12 @@ export function Agent({ id, state }: AgentProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const idleCycleRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Desk idle animation cycling — switches between idle variants
   useEffect(() => {
     if (!isActive && atDesk && !isAmbientWalking) {
       let idx = 0;
       const cycle = () => {
         idx = (idx + 1) % behaviors.animations.length;
         setIdleAnim(behaviors.animations[idx]);
-        // Occasionally show a thought icon at desk
         if (Math.random() > 0.6) {
           setAmbientIcon(behaviors.icons[idx]);
           setTimeout(() => setAmbientIcon(null), 2500);
@@ -244,10 +304,8 @@ export function Agent({ id, state }: AgentProps) {
     }
   }, [isActive, atDesk, isAmbientWalking, behaviors]);
 
-  // Wandering Logic
   useEffect(() => {
     if (isActive) {
-      // INTERRUPT: Go back to desk immediately if working
       if (timerRef.current) clearTimeout(timerRef.current);
       setAmbientIcon(null);
       setIsAmbientWalking(true);
@@ -257,31 +315,26 @@ export function Agent({ id, state }: AgentProps) {
       const t = setTimeout(() => {
         setIsAmbientWalking(false);
         setAtDesk(true);
-      }, 800);
+      }, 1000);
       return () => clearTimeout(t);
     } else {
-      // IDLE WANDERING ROUTINE
       const startWandering = () => {
-        const waitTime = Math.floor(Math.random() * (30000 - 12000) + 12000); // 12-30s
+        const waitTime = Math.floor(Math.random() * (45000 - 15000) + 15000); // 15-45s
 
         timerRef.current = setTimeout(() => {
           const keys = Object.keys(agentWaypoints).filter(k => k !== 'desk');
           const randomKey = keys[Math.floor(Math.random() * keys.length)];
           const target = agentWaypoints[randomKey];
 
-          // Walk to target
           setAtDesk(false);
           setIsAmbientWalking(true);
           setCurrentPos(target);
 
-          // Arrive at destination
           setTimeout(() => {
             setIsAmbientWalking(false);
-            // Show context-appropriate icon
             setAmbientIcon(WAYPOINT_ICONS[randomKey] || "💭");
 
-            // Linger 4-8 seconds
-            const lingerTime = 4000 + Math.random() * 4000;
+            const lingerTime = 5000 + Math.random() * 6000;
             setTimeout(() => {
               setAmbientIcon(null);
               setIsAmbientWalking(true);
@@ -290,9 +343,9 @@ export function Agent({ id, state }: AgentProps) {
                 setIsAmbientWalking(false);
                 setAtDesk(true);
                 startWandering();
-              }, 1200);
+              }, 1500);
             }, lingerTime);
-          }, 1200);
+          }, 1500);
         }, waitTime);
       };
 
@@ -305,15 +358,15 @@ export function Agent({ id, state }: AgentProps) {
 
   return (
     <div
-      className="absolute flex flex-col items-center pointer-events-none"
+      className="absolute flex flex-col items-center pointer-events-none transition-all"
       style={{
         bottom: `${currentPos.y}px`,
         left: `${currentPos.x}px`,
-        transition: isActive ? "all 0.8s ease-in" : "all 1.4s ease-in-out",
+        transitionDuration: isActive ? "1s" : "1.8s",
+        transitionTimingFunction: isActive ? "ease-out" : "ease-in-out",
         zIndex: 50
       }}
     >
-      {/* Speech bubble */}
       {(isActive || ambientIcon) && (
         <div className="speech-bubble animate-float-bubble mb-1 z-10">
           {isActive ? (
@@ -326,12 +379,10 @@ export function Agent({ id, state }: AgentProps) {
         </div>
       )}
 
-      {/* Sprite with shadow */}
       <div className="relative">
         <div className={isWalking ? "walking" : idleAnim}>
           <SpriteComponent walking={isWalking} />
         </div>
-        {/* Floor shadow */}
         <div
           className="absolute -bottom-1 left-1/2 -translate-x-1/2"
           style={{
@@ -343,7 +394,6 @@ export function Agent({ id, state }: AgentProps) {
         />
       </div>
 
-      {/* Name tag */}
       <div
         className="mt-1 px-1 text-2xs text-center font-pixel"
         style={{
@@ -357,7 +407,6 @@ export function Agent({ id, state }: AgentProps) {
         {config.name}
       </div>
 
-      {/* Status indicator */}
       <div className="flex items-center gap-0.5 mt-0.5">
         <div
           style={{

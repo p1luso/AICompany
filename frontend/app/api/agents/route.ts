@@ -9,7 +9,10 @@ const MEMORY_PATH = process.env.MEMORY_PATH || path.join(process.cwd(), "memory"
 const AGENT_FILES: Record<string, string[]> = {
   alice:    ["tendencias.md", "research.md", "contexto_marca.md"],
   scribe:   ["borradores_copy.md", "copy_final.md", "feedback_copy.md"],
-  sentinel: ["qa_report.md", "errores.md", "validacion.md"],
+  sentinel: ["qa_report.md", "errores.md", "validacion.md", "security_audit_"],
+  atlas:    ["implementacion.md", "arquitectura.md"],
+  luna:     ["test_report.md", "calidad.md"],
+  nova:     ["design_concept.md", "ui_ux_guide.md"],
 };
 
 function getFileMtime(filename: string): number | null {

@@ -17,12 +17,12 @@ type RedisManager struct {
 
 // AgentEvent estructura para los eventos de agentes
 type AgentEvent struct {
-	Agent     string            `json:"agent"`
-	Action    string            `json:"action"`
-	Message   string            `json:"message"`
-	Timestamp string            `json:"timestamp"`
-	TaskID    string            `json:"task_id,omitempty"`
-	Metadata  map[string]string `json:"metadata,omitempty"`
+	Agent     string                 `json:"agent"`
+	Action    string                 `json:"action"`
+	Message   string                 `json:"message"`
+	Timestamp string                 `json:"timestamp"`
+	TaskID    string                 `json:"task_id,omitempty"`
+	Metadata  map[string]interface{} `json:"metadata,omitempty"`
 }
 
 // NewRedisManager crea una nueva instancia del gestor de Redis
@@ -95,6 +95,66 @@ func (rm *RedisManager) PublishEvent(channel string, event *AgentEvent) error {
 	}
 
 	return nil
+}
+
+// ─── Task Persistence ──────────────────────────────────────
+
+// SaveTask guarda una tarea en Redis con TTL de 24h
+func (rm *RedisManager) SaveTask(taskID string, data []byte) error {
+	key := "task:" + taskID
+	return rm.client.Set(rm.ctx, key, string(data), 24*time.Hour).Err()
+}
+
+// GetTask obtiene una tarea de Redis por ID
+func (rm *RedisManager) GetTask(taskID string) (string, error) {
+	key := "task:" + taskID
+	return rm.client.Get(rm.ctx, key).Result()
+}
+
+// ListTasks retorna todas las tareas almacenadas en Redis
+func (rm *RedisManager) ListTasks() ([]string, error) {
+	keys, err := rm.client.Keys(rm.ctx, "task:*").Result()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(keys) == 0 {
+		return []string{}, nil
+	}
+
+	vals, err := rm.client.MGet(rm.ctx, keys...).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]string, 0, len(vals))
+	for _, v := range vals {
+		if s, ok := v.(string); ok {
+			results = append(results, s)
+		}
+	}
+	return results, nil
+}
+
+// UpdateTaskStatus actualiza el status de una tarea en Redis
+func (rm *RedisManager) UpdateTaskStatus(taskID string, status string) error {
+	raw, err := rm.GetTask(taskID)
+	if err != nil {
+		return err
+	}
+
+	var task map[string]interface{}
+	if err := json.Unmarshal([]byte(raw), &task); err != nil {
+		return err
+	}
+
+	task["status"] = status
+	data, err := json.Marshal(task)
+	if err != nil {
+		return err
+	}
+
+	return rm.SaveTask(taskID, data)
 }
 
 // Close cierra la conexión a Redis

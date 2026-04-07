@@ -4,7 +4,7 @@
 import { AgentConfig } from "@/types";
 
 export const AGENT_CONFIGS: Record<string, AgentConfig> = {
-  Manager: {
+  Alice: {
     name: "Alice",
     color: "#4fc3f7",
     bgColor: "#4fc3f710",
@@ -21,6 +21,24 @@ export const AGENT_CONFIGS: Record<string, AgentConfig> = {
     color: "#ef5350",
     bgColor: "#ef535010",
     avatar: "🛡️",
+  },
+  Atlas: {
+    name: "Atlas",
+    color: "#ff9800",
+    bgColor: "#ff980010",
+    avatar: "🔧",
+  },
+  Luna: {
+    name: "Luna",
+    color: "#ab47bc",
+    bgColor: "#ab47bc10",
+    avatar: "🧪",
+  },
+  Nova: {
+    name: "Nova",
+    color: "#ec4899",
+    bgColor: "#ec489910",
+    avatar: "✨",
   },
   Gateway: {
     name: "Gateway",
@@ -44,6 +62,7 @@ export const ACTION_MESSAGES: Record<string, string> = {
   completada: "✅ Completada",
   error: "❌ Error",
   conectado: "🔌 Conectado",
+  issues_created: "📋 Issues creados",
 };
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";

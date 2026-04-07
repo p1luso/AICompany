@@ -228,6 +228,27 @@ func subscribeToRedisEvents() {
 	err := redisManager.SubscribeToEvents(config.EventChannel, func(event *AgentEvent) error {
 		log.Printf("📤 Evento recibido de Redis: %s - %s", event.Agent, event.Action)
 
+		// Actualizar status de la tarea en Redis si tiene task_id
+		if event.TaskID != "" {
+			var newStatus string
+			switch event.Action {
+			case "iniciando", "planificando", "trabajando", "revisando", "documentando", "validando":
+				newStatus = "processing"
+			case "completada":
+				// Solo marcar completed si es el Manager quien dice "completada" (final)
+				if event.Agent == "Manager" {
+					newStatus = "completed"
+				}
+			case "error":
+				newStatus = "failed"
+			}
+			if newStatus != "" {
+				if err := redisManager.UpdateTaskStatus(event.TaskID, newStatus); err != nil {
+					log.Printf("⚠️  Error actualizando status en Redis: %v", err)
+				}
+			}
+		}
+
 		// Serializar evento a JSON
 		data, err := json.Marshal(event)
 		if err != nil {
@@ -309,6 +330,26 @@ func createTask(c *fiber.Ctx) error {
 	json.Unmarshal(body, &aiWorkerResp)
 
 	log.Printf("✅ Tarea enviada a AI Worker: task_id=%v", aiWorkerResp["task_id"])
+
+	// Persistir tarea en Redis
+	if taskID, ok := aiWorkerResp["task_id"].(string); ok {
+		taskRecord := map[string]interface{}{
+			"id":          taskID,
+			"title":       req.Title,
+			"description": req.Description,
+			"priority":    req.Priority,
+			"status":      "pending",
+			"created_at":  time.Now().Format(time.RFC3339),
+		}
+		if recordData, err := json.Marshal(taskRecord); err == nil {
+			if err := redisManager.SaveTask(taskID, recordData); err != nil {
+				log.Printf("⚠️  Error persistiendo tarea en Redis: %v", err)
+			} else {
+				log.Printf("💾 Tarea persistida en Redis: %s", taskID)
+			}
+		}
+	}
+
 	return c.Status(resp.StatusCode).JSON(aiWorkerResp)
 }
 
@@ -329,18 +370,36 @@ func getTask(c *fiber.Ctx) error {
 }
 
 func listTasks(c *fiber.Ctx) error {
-	resp, err := http.Get(config.AIWorkerURL + "/api/tasks")
+	// Leer tareas persistidas en Redis
+	rawTasks, err := redisManager.ListTasks()
 	if err != nil {
-		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
-			"error": "AI Worker unavailable",
-		})
+		log.Printf("⚠️  Error leyendo tareas de Redis: %v", err)
+		// Fallback al AI Worker
+		resp, err := http.Get(config.AIWorkerURL + "/api/tasks")
+		if err != nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"error": "AI Worker unavailable",
+			})
+		}
+		defer resp.Body.Close()
+		body, _ := io.ReadAll(resp.Body)
+		var result map[string]interface{}
+		json.Unmarshal(body, &result)
+		return c.Status(resp.StatusCode).JSON(result)
 	}
-	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	var result map[string]interface{}
-	json.Unmarshal(body, &result)
-	return c.Status(resp.StatusCode).JSON(result)
+	tasks := make([]map[string]interface{}, 0, len(rawTasks))
+	for _, raw := range rawTasks {
+		var t map[string]interface{}
+		if err := json.Unmarshal([]byte(raw), &t); err == nil {
+			tasks = append(tasks, t)
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"count": len(tasks),
+		"tasks": tasks,
+	})
 }
 
 func testEvent(c *fiber.Ctx) error {

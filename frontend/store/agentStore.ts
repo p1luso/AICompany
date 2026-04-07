@@ -15,9 +15,12 @@ interface AgentStore {
 }
 
 const INITIAL_AGENTS: Record<string, Agent> = {
-  alice: { id: "alice", status: "IDLE", lastSeen: Date.now() },
-  scribe: { id: "scribe", status: "IDLE", lastSeen: Date.now() },
+  alice:    { id: "alice",    status: "IDLE", lastSeen: Date.now() },
+  scribe:   { id: "scribe",   status: "IDLE", lastSeen: Date.now() },
   sentinel: { id: "sentinel", status: "IDLE", lastSeen: Date.now() },
+  atlas:    { id: "atlas",    status: "IDLE", lastSeen: Date.now() },
+  luna:     { id: "luna",     status: "IDLE", lastSeen: Date.now() },
+  nova:     { id: "nova",     status: "IDLE", lastSeen: Date.now() },
 };
 
 export const useAgentStore = create<AgentStore>((set) => ({

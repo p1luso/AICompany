@@ -6,7 +6,6 @@ const nextConfig = {
     NEXT_PUBLIC_WS_URL:  process.env.NEXT_PUBLIC_WS_URL  || "ws://localhost:8000/ws",
   },
   // Allow the memory API route to read from filesystem
-  serverExternalPackages: [],
 };
 
 module.exports = nextConfig;
