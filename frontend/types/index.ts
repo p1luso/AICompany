@@ -47,6 +47,14 @@ export interface AgentConfig {
 // WebSocket connection status
 export type WebSocketStatus = "connecting" | "connected" | "disconnected" | "error";
 
+// Sub-tarea o Issue
+export interface SubTask {
+  id: string;
+  title: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  assignedAgent?: string;
+}
+
 // Store task
 export interface StoredTask {
   id: string;
@@ -54,5 +62,7 @@ export interface StoredTask {
   status: "pending" | "processing" | "completed" | "failed";
   createdAt: number;
   events: AgentEvent[];
+  issues: SubTask[];
+  assignedAgent?: string;
   result?: string;
 }

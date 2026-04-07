@@ -4,6 +4,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { AgentEvent } from "@/types";
 import { useAgentStore } from "@/store/agentStore";
+import { useTaskStore } from "@/store/taskStore";
 
 interface UseWebSocketOptions {
   url: string;
@@ -65,6 +66,13 @@ export function useWebSocket({
             } else if (idleActions.includes(data.action)) {
               updateAgent(data.agent, "IDLE");
             }
+          }
+
+          // Update task status in global store if task_id exists
+          if (data.task_id) {
+            const { addEvent, updateTaskFromEvent } = useTaskStore.getState();
+            addEvent(data);
+            updateTaskFromEvent(data);
           }
         } catch (error) {
           console.error("Error parseando mensaje WebSocket:", error);

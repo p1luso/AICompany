@@ -80,43 +80,106 @@ export function KanbanBoard({ onClose }: KanbanBoardProps) {
                     </div>
                   ) : (
                     colTasks.map(task => {
-                      // Find agents working on this task
-                      const workingAgents = agentList.filter(a => 
-                        a.status === "ACTIVE" && col.id === "processing"
-                      );
+                      // Get assigned agent config if any
+                      const assignedId = task.assignedAgent ? task.assignedAgent.toLowerCase() : null;
+                      const agentConfig = assignedId ? AGENT_CONFIG[assignedId as keyof typeof AGENT_CONFIG] : null;
 
                       return (
                         <div 
                           key={task.id}
-                          className="p-2 bg-white border-2 border-[#888] shadow-[2px_2px_0_#ccc] flex flex-col gap-2"
+                          className="p-2 bg-white border-2 border-[#888] shadow-[2px_2px_0_#ccc] flex flex-col gap-2 transition-all hover:translate-y-[-1px]"
                         >
-                          <div className="font-pixel text-[7px] text-black uppercase font-bold truncate">
-                            {task.request.title}
+                          <div className="flex justify-between items-start">
+                            <div className="font-pixel text-[7px] text-black uppercase font-bold leading-tight flex-1 pr-2">
+                              {task.request.title}
+                            </div>
+                            {task.request.priority === "high" && (
+                              <div className="px-1 bg-red-500 text-white font-pixel text-[4px] animate-pulse">HIGH</div>
+                            )}
                           </div>
                           
+                          <div className="flex items-center gap-2 mt-1 py-1 border-t border-gray-100">
+                            {agentConfig ? (
+                              <>
+                                <div 
+                                  className="w-5 h-5 flex items-center justify-center border border-gray-300 bg-gray-50 rounded-sm"
+                                  style={{ fontSize: "12px" }}
+                                >
+                                  {agentConfig.emoji}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-pixel text-[5px] text-gray-400">ASSIGNED TO:</span>
+                                  <span className="font-pixel text-[6px]" style={{ color: agentConfig.color }}>
+                                    {agentConfig.name}
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="w-5 h-5 flex items-center justify-center border border-dashed border-gray-300 bg-gray-50 rounded-sm text-[8px] text-gray-300">
+                                  ?
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="font-pixel text-[5px] text-gray-400">ASSIGNED TO:</span>
+                                  <span className="font-pixel text-[6px] text-gray-400 italic">WAITING...</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+
                           {col.id === "processing" && (
-                            <div className="flex items-center gap-1">
-                              {workingAgents.map(a => {
-                                const config = AGENT_CONFIG[a.id as keyof typeof AGENT_CONFIG];
-                                return (
-                                  <div 
-                                    key={a.id}
-                                    title={a.id}
-                                    className="w-4 h-4 flex items-center justify-center border border-gray-300 bg-gray-100 rounded-sm"
-                                    style={{ fontSize: "10px", color: config?.color || "#000" }}
-                                  >
-                                    {config?.emoji || "🤖"}
-                                  </div>
-                                );
-                              })}
-                              <div className="w-full h-0.5 bg-gray-100 overflow-hidden ml-1">
-                                <div className="h-full bg-blue-500 animate-pulse" style={{ width: "100%" }} />
-                              </div>
+                            <div className="w-full h-1 bg-gray-100 overflow-hidden">
+                              <div 
+                                className="h-full bg-blue-500 animate-progress-stripes" 
+                                style={{ 
+                                  width: "100%",
+                                  backgroundImage: "linear-gradient(45deg, rgba(255,255,255,.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,.15) 50%, rgba(255,255,255,.15) 75%, transparent 75%, transparent)",
+                                  backgroundSize: "8px 8px"
+                                }} 
+                              />
                             </div>
                           )}
 
-                          <div className="font-mono text-[5px] text-gray-500">
-                            ID: {task.id.slice(0, 8)}...
+                          {/* Issues List */}
+                          {task.issues && task.issues.length > 0 && (
+                            <div className="mt-1 space-y-1 border-t border-gray-100 pt-2">
+                              <div className="font-pixel text-[5px] text-gray-500 mb-1 uppercase">Backlog de Issues:</div>
+                              {task.issues.map(issue => {
+                                const issueAgentId = issue.assignedAgent?.toLowerCase();
+                                const issueAgentConfig = issueAgentId ? AGENT_CONFIG[issueAgentId as keyof typeof AGENT_CONFIG] : null;
+
+                                return (
+                                  <div key={issue.id} className="flex items-center gap-1.5 font-pixel text-[6px]">
+                                    <div className="flex items-center gap-0.5 min-w-[24px]">
+                                      {issue.status === "completed" ? (
+                                        <span className="text-green-500 text-[8px]">☑</span>
+                                      ) : issue.status === "processing" ? (
+                                        <span className="text-blue-500 animate-pulse text-[8px]">▶</span>
+                                      ) : (
+                                        <span className="text-gray-300 text-[8px]">☐</span>
+                                      )}
+                                      {issueAgentConfig && (
+                                        <span title={issueAgentConfig.name} style={{ fontSize: "8px" }}>
+                                          {issueAgentConfig.emoji}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className={`${issue.status === "completed" ? "line-through text-gray-400" : "text-gray-700"} truncate`}>
+                                      {issue.title}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          <div className="flex justify-between items-center mt-1">
+                            <div className="font-mono text-[4px] text-gray-400">
+                              REF: {task.id.slice(0, 8)}
+                            </div>
+                            <div className="font-pixel text-[4px] text-gray-500">
+                              {new Date(task.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </div>
                           </div>
                         </div>
                       );

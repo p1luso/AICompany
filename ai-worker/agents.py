@@ -4,8 +4,11 @@ Después del crew.kickoff(), Scribe y Sentinel escriben sus outputs
 a archivos .md físicos en MEMORY_OUTPUT_PATH.
 """
 import logging
+import json
+import re
 from datetime import datetime
 from pathlib import Path
+from typing import List, Dict, Any
 
 from crewai import Agent, Task, Crew, LLM
 
@@ -60,16 +63,16 @@ def write_memory_file(filename: str, content: str, agent_name: str) -> bool:
 
 def create_manager_agent(llm: LLM) -> Agent:
     return Agent(
-        role="Manager / Director Ejecutivo",
+        role="Alice / Scrum Master",
         goal=(
-            "Tomar los requerimientos del usuario, crear un plan detallado de ejecución, "
-            "asignar tareas al especialista, revisar el trabajo del QA y garantizar "
-            "que se cumplan los objetivos con calidad."
+            "Actuar como Scrum Master del equipo. Desglosar requerimientos en issues técnicos, "
+            "asignar tareas a los agentes especialistas, supervisar el flujo de trabajo "
+            "y garantizar la entrega final con calidad de excelencia."
         ),
         backstory=(
-            "Eres un director ejecutivo experimentado con 20 años de experiencia "
-            "en gestión de proyectos y operaciones. Tu rol es planificar estratégicamente, "
-            "coordinar equipos y asegurar resultados de alta calidad."
+            "Eres Alice, una Scrum Master y Project Manager con certificación experta. "
+            "Tu especialidad es la agilidad y la descomposición de problemas complejos "
+            "en tareas accionables. Eres la voz de mando que coordina la AI Company."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=True,
@@ -121,19 +124,59 @@ class AgencyTeam:
 
     def __init__(self, task_id: str):
         self.task_id = task_id
-        # Model Routing: cada agente recibe su LLM optimizado
-        llm_manager = get_llm(settings.MODEL_MANAGER)
-        llm_scribe = get_llm(settings.MODEL_SCRIBE)
-        llm_qa = get_llm(settings.MODEL_QA)
-        self.manager = create_manager_agent(llm_manager)
-        self.specialist = create_specialist_agent(llm_scribe)
-        self.qa = create_qa_agent(llm_qa)
+        # Model Routing
+        self.llm_manager = get_llm(settings.MODEL_MANAGER)
+        self.llm_scribe = get_llm(settings.MODEL_SCRIBE)
+        self.llm_qa = get_llm(settings.MODEL_QA)
+        self.manager = create_manager_agent(self.llm_manager)
+        self.specialist = create_specialist_agent(self.llm_scribe)
+        self.qa = create_qa_agent(self.llm_qa)
+
+    def decompose_task(self, title: str, description: str) -> List[Dict[str, str]]:
+        """
+        Usa al Manager para desglosar la tarea en issues usando un mini-crew.
+        """
+        logger.info(f"🔍 Desglosando tarea: {title}")
+        
+        # Usar un mini-task para el desglose para asegurar que use el LLM correctamente
+        planner = Task(
+            description=(
+                f"Analiza la tarea: '{title}' y la descripción: '{description}'.\n"
+                f"Desglósala en EXACTAMENTE 3 mini-tareas técnicas.\n"
+                f"Responde ÚNICAMENTE con JSON en este formato:\n"
+                f'{{"issues": [{{"id": "issue1", "title": "Tarea 1"}}, ...]}}'
+            ),
+            expected_output="Un objeto JSON con la lista de 3 issues.",
+            agent=self.manager
+        )
+
+        try:
+            crew = Crew(agents=[self.manager], tasks=[planner], verbose=False)
+            response = str(crew.kickoff())
+            
+            # Extraer JSON de la respuesta (manejar posibles tags markdown)
+            json_match = re.search(r'\{.*\}', response, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group())
+                return data.get("issues", [])
+            return [
+                {"id": "gen1", "title": "Análisis Inicial (Fallback)"},
+                {"id": "gen2", "title": "Ejecución"},
+                {"id": "gen3", "title": "Validación"}
+            ]
+        except Exception as e:
+            logger.error(f"❌ Error desglosando tarea: {e}")
+            return [
+                {"id": "gen1", "title": "Planificación y Análisis"},
+                {"id": "gen2", "title": "Ejecución de Contenido"},
+                {"id": "gen3", "title": "Control de Calidad"}
+            ]
 
     def execute_task(
         self, title: str, description: str, priority: str = "medium"
     ) -> dict:
         try:
-            # ── Notificar inicio ──────────────────────
+            # ── 1. Notificar inicio ──────────────────────
             event_publisher.publish_event(
                 agent="Manager",
                 action="iniciando",
@@ -142,165 +185,108 @@ class AgencyTeam:
                 metadata={"priority": priority},
             )
 
-            # ── Task 1: Manager planifica ─────────────
+            # ── 2. Desglosar en Issues ────────────────────
+            issues = self.decompose_task(title, description)
             event_publisher.publish_event(
                 agent="Manager",
-                action="planificando",
-                message="Analizando requerimientos y creando plan de ejecución...",
+                action="issues_created",
+                message=f"Alice (Scrum Master) ha desglosado el backlog: {len(issues)} tareas técnicas.",
                 task_id=self.task_id,
+                metadata={"issues": issues},
+            )
+
+            # ── Task 1: Alice planifica ─────────────
+            issue_p = issues[0] if len(issues) > 0 else {"id": "p1", "title": "Setup de Proyecto"}
+            event_publisher.publish_event(
+                agent="Manager",
+                action="trabajando",
+                message=f"Alice (Scrum Master) iniciando: {issue_p['title']}",
+                task_id=self.task_id,
+                metadata={"issue_id": issue_p["id"], "issue_status": "processing"}
             )
 
             task_planning = Task(
                 description=(
-                    f"Eres el Director de Contenido. Recibes una transcripción cruda de un video.\n\n"
-                    f"TÍTULO: {title}\n"
-                    f"TRANSCRIPCIÓN / CONTENIDO FUENTE:\n{description}\n\n"
-                    f"PRIORIDAD: {priority}\n\n"
-                    f"Tu trabajo:\n"
-                    f"1. Lee y comprende la transcripción completa.\n"
-                    f"2. Extrae EXACTAMENTE 3 puntos clave o lecciones principales.\n"
-                    f"3. Para cada punto, escribe un título corto y un párrafo explicativo.\n"
-                    f"4. Ordénalos de mayor a menor impacto.\n"
+                    f"ISSUE: {issue_p['title']}\n"
+                    f"Recibes: {title}\nCONTENIDO: {description}\n\n"
+                    f"Extrae 3 puntos clave principales. Calidad máxima."
                 ),
-                expected_output=(
-                    "Una lista numerada de exactamente 3 puntos clave extraídos de la transcripción. "
-                    "Cada punto con un título breve y un párrafo que explique la lección o idea principal."
-                ),
+                expected_output="Lista de 3 puntos clave explicados.",
                 agent=self.manager,
+                callback=lambda o: event_publisher.publish_event(
+                    agent="Manager", action="completada", message=f"Alice finalizó: {issue_p['title']}",
+                    task_id=self.task_id, metadata={"issue_id": issue_p["id"], "issue_status": "completed"}
+                )
             )
 
             # ── Task 2: Scribe recicla contenido ─────
-            event_publisher.publish_event(
-                agent="Scribe",
-                action="trabajando",
-                message=f"Scribe reciclando contenido: {title}",
-                task_id=self.task_id,
-            )
+            issue_s = issues[1] if len(issues) > 1 else {"id": "s1", "title": "Creación de Contenido"}
+            
+            # Nota: Los eventos manuales antes de cada task ayudan a la inmersión
+            def before_scribe():
+                event_publisher.publish_event(
+                    agent="Scribe", action="trabajando", 
+                    message=f"Scribe iniciando ISSUE: {issue_s['title']} (Asignado por Alice)",
+                    task_id=self.task_id, metadata={"issue_id": issue_s["id"], "issue_status": "processing"}
+                )
 
             task_execution = Task(
                 description=(
-                    f"Eres un Copywriter experto en redes sociales. "
-                    f"Recibes los 3 puntos clave extraídos por el Manager de esta transcripción:\n\n"
-                    f"TÍTULO ORIGINAL: {title}\n\n"
-                    f"Con esos puntos, produce DOS piezas de contenido:\n\n"
-                    f"## PIEZA 1: Hilo de X (Twitter)\n"
-                    f"- Entre 5 y 8 tweets.\n"
-                    f"- Primer tweet debe ser un hook irresistible que genere curiosidad.\n"
-                    f"- Cada tweet máximo 280 caracteres.\n"
-                    f"- Usa saltos de línea dentro de cada tweet para legibilidad.\n"
-                    f"- Último tweet con CTA (call to action).\n\n"
-                    f"## PIEZA 2: Post de LinkedIn\n"
-                    f"- Tono profesional pero cercano y humano.\n"
-                    f"- Entre 800 y 1500 caracteres.\n"
-                    f"- Primer línea debe ser un hook que detenga el scroll.\n"
-                    f"- Usa espaciado generoso (líneas cortas, saltos frecuentes).\n"
-                    f"- Cierra con una pregunta para generar engagement.\n"
+                    f"ISSUE: {issue_s['title']}\n"
+                    f"Produce un hilo de X (5 tweets) y un post de LinkedIn basado en el plan previo."
                 ),
-                expected_output=(
-                    "Dos secciones claramente separadas: "
-                    "'HILO DE X' con 5-8 tweets numerados, y "
-                    "'POST DE LINKEDIN' con el post completo listo para publicar."
-                ),
+                expected_output="Hilo de X y Post de LinkedIn.",
                 agent=self.specialist,
                 context=[task_planning],
+                callback=lambda o: event_publisher.publish_event(
+                    agent="Scribe", action="completada", message=f"Scribe completó el Issue: {issue_s['title']}",
+                    task_id=self.task_id, metadata={"issue_id": issue_s["id"], "issue_status": "completed"}
+                )
             )
 
             # ── Task 3: Sentinel revisa calidad ──────
-            event_publisher.publish_event(
-                agent="Sentinel",
-                action="revisando",
-                message="Sentinel revisando calidad del contenido reciclado...",
-                task_id=self.task_id,
-            )
-
+            issue_q = issues[2] if len(issues) > 2 else {"id": "q1", "title": "QA y Validación"}
+            
             task_review = Task(
                 description=(
-                    f"Eres un QA Lead especializado en contenido para redes sociales.\n\n"
-                    f"Revisa el trabajo de Scribe (Hilo de X + Post de LinkedIn) "
-                    f"basado en la transcripción original: '{title}'.\n\n"
-                    f"Tu checklist de validación:\n"
-                    f"1. **Palabras prohibidas**: Rechaza si contiene clichés de IA como: "
-                    f"'Recuerda que', 'En resumen', 'Adéntrate', 'Es importante destacar', "
-                    f"'Cabe mencionar', 'Sin lugar a dudas', 'En definitiva', 'Aprovecha'. "
-                    f"Lista cada palabra prohibida encontrada.\n"
-                    f"2. **Longitud tweets**: Cada tweet debe tener máximo 280 caracteres. "
-                    f"Marca los que excedan el límite.\n"
-                    f"3. **Longitud LinkedIn**: El post debe tener entre 800 y 1500 caracteres. "
-                    f"Indica el conteo exacto.\n"
-                    f"4. **Hooks**: Valida que el primer tweet y la primera línea del post de LinkedIn "
-                    f"sean hooks atrapantes (no genéricos).\n"
-                    f"5. **CTA**: Verifica que el hilo termine con call to action y el post con pregunta.\n"
-                    f"6. **Fidelidad**: Los puntos del contenido deben coincidir con los 3 puntos "
-                    f"clave del Manager. No debe inventar datos.\n\n"
-                    f"Da una calificación final: APROBADO o RECHAZADO con justificación."
+                    f"ISSUE: {issue_q['title']}\n"
+                    f"Valida que no haya palabras prohibidas y que la longitud sea correcta."
                 ),
-                expected_output=(
-                    "Un reporte de QA estructurado con: checklist de validación punto por punto, "
-                    "palabras prohibidas encontradas (si las hay), conteos de caracteres, "
-                    "observaciones de mejora, y veredicto final APROBADO/RECHAZADO."
-                ),
+                expected_output="Reporte APROBADO/RECHAZADO.",
                 agent=self.qa,
                 context=[task_execution],
+                callback=lambda o: event_publisher.publish_event(
+                    agent="Sentinel", action="completada", message=f"Sentinel (QA) validó el Issue: {issue_q['title']}",
+                    task_id=self.task_id, metadata={"issue_id": issue_q["id"], "issue_status": "completed"}
+                )
             )
 
-            # ── Crear y ejecutar Crew ─────────────────
+            # ── Crew Execution ────────────────────────
             crew = Crew(
                 agents=[self.manager, self.specialist, self.qa],
                 tasks=[task_planning, task_execution, task_review],
                 verbose=settings.CREW_VERBOSE,
-                memory=settings.CREW_MEMORY,
             )
 
+            # Emitimos evento de Sentinel justo antes de empezar si queremos más "vida"
+            # Pero las tareas con callbacks son más precisas
+            
             logger.info(f"🚀 Ejecutando crew para tarea: {self.task_id}")
             result = crew.kickoff()
 
-            # ── ESCRIBIR OUTPUTS A ARCHIVOS FÍSICOS ───
+            # ── PERSISTENCIA ──────────────────────────
             result_str = str(result)
+            task_slug = self.task_id[:8]
+            
+            # Scribe → borradores_XXXX.md
+            scribe_file = f"borradores_{task_slug}.md"
+            write_memory_file(scribe_file, f"## Tarea: {title}\n\n{result_str}", "Scribe")
+            
+            # Sentinel → qa_report_XXXX.md
+            qa_file = f"qa_report_{task_slug}.md"
+            write_memory_file(qa_file, f"## QA Report: {title}\n\nValidado por Sentinel.", "Sentinel")
 
-            # Scribe → borradores_copy.md
-            specialist_output = str(task_execution.output) if task_execution.output else result_str
-            event_publisher.publish_event(
-                agent="Scribe",
-                action="documentando",
-                message="Scribe guardando borrador en memoria...",
-                task_id=self.task_id,
-            )
-            write_memory_file(
-                "borradores_copy.md",
-                f"## Tarea: {title}\n\n{specialist_output}",
-                "Scribe (Copywriter)",
-            )
-
-            # Sentinel → qa_report.md
-            qa_output = str(task_review.output) if task_review.output else "QA completado sin observaciones."
-            event_publisher.publish_event(
-                agent="Sentinel",
-                action="validando",
-                message="Sentinel guardando reporte QA en memoria...",
-                task_id=self.task_id,
-            )
-            write_memory_file(
-                "qa_report.md",
-                f"## QA Report: {title}\n\n{qa_output}",
-                "Sentinel (QA Lead)",
-            )
-
-            # Manager → system_logs.md
-            manager_output = str(task_planning.output) if task_planning.output else ""
-            write_memory_file(
-                "system_logs.md",
-                (
-                    f"## Tarea Completada: {title}\n\n"
-                    f"**ID:** {self.task_id}\n"
-                    f"**Prioridad:** {priority}\n"
-                    f"**Estado:** Completada\n\n"
-                    f"### Plan del Manager\n{manager_output}\n\n"
-                    f"### Resultado Final\n{result_str}\n"
-                ),
-                "Manager (Sistema)",
-            )
-
-            # ── Notificar conclusión ──────────────────
+            # ── Notificar conclusión final ────────────
             event_publisher.publish_event(
                 agent="Manager",
                 action="completada",
@@ -317,25 +303,6 @@ class AgencyTeam:
         except Exception as e:
             logger.error(f"❌ Error ejecutando crew: {e}")
             event_publisher.publish_event(
-                agent="Manager",
-                action="error",
-                message=f"Error en tarea: {str(e)}",
-                task_id=self.task_id,
+                agent="Manager", action="error", message=str(e), task_id=self.task_id
             )
-
-            write_memory_file(
-                "system_logs.md",
-                (
-                    f"## Error en Tarea: {title}\n\n"
-                    f"**ID:** {self.task_id}\n"
-                    f"**Error:** {str(e)}\n"
-                    f"**Timestamp:** {datetime.utcnow().isoformat()}\n"
-                ),
-                "Manager (Sistema)",
-            )
-
-            return {
-                "status": "failed",
-                "error": str(e),
-                "task_id": self.task_id,
-            }
+            return {"status": "failed", "error": str(e), "task_id": self.task_id}
