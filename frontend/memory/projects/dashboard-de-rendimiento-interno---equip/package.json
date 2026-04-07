@@ -1,1 +1,0 @@
-{"name": "dashboard-de-rendimiento-interno---equip", "version": "1.0.0", "description": "Dashboard de rendimiento interno - equipo Luva", "main": "index.js", "scripts": {"build": "echo 'Build process started...'; exit 0;"}, "author": "Equipo Luva", "license": "ISC"}

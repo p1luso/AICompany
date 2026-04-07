@@ -280,17 +280,17 @@ class AgencyTeam:
         planner = Task(
             description=(
                 f"Analiza el proyecto: '{title}' - Requerimiento: '{description}'.\n"
-                f"Estructura el backlog en 4-6 tareas técnicas CONCRETAS para el equipo:\n"
-                f"1. ARCHIE: Crear estructura de carpetas y archivos base (scaffold).\n"
-                f"2. ATLAS: Implementar lógica y componentes funcionales.\n"
-                f"3. NOVA: Crear estilos CSS y assets visuales.\n"
-                f"4. LUNA: QA, build final, y fix de bugs.\n\n"
-                f"IMPORTANTE: Cada tarea debe ser ACCIONABLE (ej: 'Crear componente Header con navegación'), "
-                f"no vaga (ej: 'Diseñar la UI').\n\n"
-                f"Responde ÚNICAMENTE con JSON: "
-                f"{{\"issues\": [{{\"id\": \"i1\", \"title\": \"Scaffold proyecto con Vite y React\", \"assignedAgent\": \"archie\"}}, ...]}}"
+                f"Estructura el backlog en 4-6 tareas técnicas CONCRETAS para el equipo.\n\n"
+                f"LÓGICA DE DESCOMPOSICIÓN:\n"
+                f"- Si es un PROYECTO DE SOFTWARE/WEB (React, landing page, app web, dashboard, etc.):\n"
+                f"  1. PRIMER issue para ARCHIE: Scaffold (crear estructura base, package.json, etc.)\n"
+                f"  2. Issues adicionales: ATLAS (dev), NOVA (diseño/CSS), LUNA (QA)\n"
+                f"- Si es OTRO TIPO de proyecto (documento, investigación, diseño, copywriting, etc.):\n"
+                f"  Distribuye las tareas sin necesidad de scaffold. Usa ARCHIE si hay estructura/setup, ATLAS para implementación, NOVA para diseño, LUNA para QA.\n\n"
+                f"IMPORTANTE: Piensa qué TIPO de proyecto es antes de decidir si necesita scaffold.\n\n"
+                f"Responde ÚNICAMENTE con JSON: {{\"issues\": [{{\"id\": \"i1\", \"title\": \"...\", \"assignedAgent\": \"archie/atlas/nova/luna\"}}, ...]}}"
             ),
-            expected_output="JSON con lista de issues técnicos accionables.",
+            expected_output="JSON con lista de issues adaptados al tipo de proyecto (scaffold si es software, tareas flexibles si es otro tipo).",
             agent=self.alice
         )
 
@@ -336,7 +336,7 @@ class AgencyTeam:
         return [phase for phase in phases if phase]
 
     def _run_single_issue(self, issue: Dict, title: str, project_path: Path,
-                          previous_context: str) -> Tuple[str, str]:
+                          previous_context: str, slug: str) -> Tuple[str, str]:
         agent_id = issue.get("assignedAgent", "atlas")
         agent_obj, agent_label = self.get_agent_and_label(agent_id)
         issue_id = issue["id"]
@@ -352,7 +352,6 @@ class AgencyTeam:
         if self.state_callback:
             self.state_callback(self.task_id, {"issue_id": issue_id, "issue_status": "processing"})
 
-        slug = re.sub(r'[^a-z0-9]', '-', title.lower()).strip('-')
         memory_path = Path(settings.MEMORY_OUTPUT_PATH) / slug / f"{agent_label.lower()}_report.md"
 
         # Contexto previo resumido para no saturar el prompt
@@ -469,7 +468,7 @@ class AgencyTeam:
 
                 if len(phase_issues) == 1:
                     issue_id, result = self._run_single_issue(
-                        phase_issues[0], title, project_path, accumulated_context
+                        phase_issues[0], title, project_path, accumulated_context, slug
                     )
                     accumulated_context += f"\n--- {phase_issues[0]['title']} ---\n{str(result)[:500]}\n"
                 else:
@@ -481,7 +480,7 @@ class AgencyTeam:
                         future_to_issue = {
                             executor.submit(
                                 self._run_single_issue,
-                                issue, title, project_path, accumulated_context
+                                issue, title, project_path, accumulated_context, slug
                             ): issue
                             for issue in phase_issues
                         }
