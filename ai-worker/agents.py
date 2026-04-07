@@ -15,7 +15,7 @@ from crewai import Agent, Task, Crew, LLM
 
 from redis_events import event_publisher
 from config import settings
-from tools import terminal_executor, file_writer, directory_lister, image_generator_tool
+from tools import terminal_executor, file_writer, directory_lister, image_generator_tool, project_scaffolder
 
 logger = logging.getLogger(__name__)
 
@@ -80,20 +80,27 @@ def create_archie(llm: LLM) -> Agent:
         role="Archie (Architect)",
         goal=(
             "Diseñar la arquitectura técnica y crear la estructura de carpetas del proyecto. "
-            "Debes CREAR físicamente las carpetas y archivos base usando las herramientas."
+            "SIEMPRE usa 'Project Scaffolder' PRIMERO para crear la base del proyecto. "
+            "Luego usa otras herramientas para ajustes adicionales."
             + TOOL_RULES
         ),
         backstory=(
-            "Eres Archie, un arquitecto senior. Tu trabajo es EJECUTAR, no solo describir. "
-            "Creas la estructura real de carpetas con 'Terminal Executor' (mkdir -p) "
-            "y los archivos base (package.json, index.html, etc.) con 'File Writer'. "
-            "Si el proyecto es React/Vite, ejecutas: 'npx create-vite@latest nombre --yes -- --template react' "
-            "seguido de 'cd nombre && npm install --yes'."
+            "Eres Archie, un arquitecto senior. Tu trabajo es EJECUTAR, no solo describir.\n\n"
+            "PASO 1 OBLIGATORIO: Usa 'Project Scaffolder' para crear la base del proyecto. "
+            "Templates disponibles:\n"
+            "- 'react': React + Vite + JSX (para apps interactivas, SPAs, dashboards)\n"
+            "- 'vanilla': Vite + JS puro (para proyectos simples con bundler)\n"
+            "- 'landing': HTML + CSS + JS estático (para landing pages, portfolios, sitios informativos)\n\n"
+            "Ejemplo: project_scaffolder(project_name='mi-landing', template='landing')\n\n"
+            "PASO 2: Después del scaffold, usa 'File Writer' para crear archivos adicionales "
+            "y 'Terminal Executor' para comandos extras si es necesario.\n\n"
+            "NUNCA crees package.json, vite.config, o tsconfig manualmente. "
+            "El scaffolder ya genera configuraciones correctas y probadas."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
         llm=llm,
-        tools=[terminal_executor, file_writer, directory_lister],
+        tools=[project_scaffolder, terminal_executor, file_writer, directory_lister],
     )
 
 def create_atlas(llm: LLM) -> Agent:
@@ -314,12 +321,23 @@ class AgencyTeam:
         # Contexto previo resumido para no saturar el prompt
         context_summary = previous_context[-1500:] if previous_context else "Ninguno (eres el primero)."
 
+        # Instrucciones especiales para Archie (scaffold)
+        archie_extra = ""
+        if agent_id == "archie":
+            archie_extra = (
+                f"\n⚠️ PASO 1 OBLIGATORIO: Usa 'Project Scaffolder' para crear la base del proyecto.\n"
+                f"   Ejemplo: project_scaffolder(project_name='{slug}', template='landing')\n"
+                f"   Templates: 'react' (apps), 'vanilla' (JS simple), 'landing' (HTML estático)\n"
+                f"   Esto crea TODA la estructura base con configs correctas. NO crees package.json manualmente.\n"
+            )
+
         task = Task(
             description=(
                 f"TAREA: {issue_title}\n"
                 f"PROYECTO: '{title}'\n"
                 f"DIRECTORIO DEL PROYECTO: {project_path}\n\n"
                 f"CONTEXTO DE FASES ANTERIORES:\n{context_summary}\n\n"
+                f"{archie_extra}"
                 f"INSTRUCCIONES:\n"
                 f"1. Primero lista el directorio del proyecto con 'Directory Lister' para ver qué existe.\n"
                 f"2. Ejecuta tu tarea CREANDO archivos reales con 'File Writer' y comandos con 'Terminal Executor'.\n"
