@@ -24,7 +24,7 @@ export function KanbanBoard({ onClose }: KanbanBoardProps) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div 
         className="w-full max-w-4xl bg-[#c0c0c0] flex flex-col shadow-[8px_8px_0_#000]"
         style={{
@@ -91,9 +91,9 @@ export function KanbanBoard({ onClose }: KanbanBoardProps) {
                         >
                           <div className="flex justify-between items-start">
                             <div className="font-pixel text-[7px] text-black uppercase font-bold leading-tight flex-1 pr-2">
-                              {task.request.title}
+                              {task.request?.title || "Sin Título (Tarea en carga...)"}
                             </div>
-                            {task.request.priority === "high" && (
+                            {task.request?.priority === "high" && (
                               <div className="px-1 bg-red-500 text-white font-pixel text-[4px] animate-pulse">HIGH</div>
                             )}
                           </div>

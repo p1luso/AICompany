@@ -10,7 +10,7 @@ import { WAYPOINTS, Waypoint } from "./config";
 
 function AliceSprite({ walking }: { walking: boolean }) {
   return (
-    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 12 16" width={walking ? 60 : 54} height={walking ? 84 : 78} style={{ imageRendering: "pixelated" }}>
       <rect x="2" y="0" width="8" height="1" fill="#5D4037" />
       <rect x="1" y="1" width="10" height="2" fill="#5D4037" />
       <rect x="0" y="3" width="2" height="3" fill="#5D4037" />
@@ -37,7 +37,7 @@ function AliceSprite({ walking }: { walking: boolean }) {
 
 function ScribeSprite({ walking }: { walking: boolean }) {
   return (
-    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 12 16" width={walking ? 60 : 54} height={walking ? 84 : 78} style={{ imageRendering: "pixelated" }}>
       <rect x="3" y="0" width="6" height="1" fill="#3E2723" />
       <rect x="2" y="1" width="8" height="3" fill="#3E2723" />
       <rect x="2" y="4" width="8" height="5" fill="#C68642" />
@@ -63,7 +63,7 @@ function ScribeSprite({ walking }: { walking: boolean }) {
 
 function SentinelSprite({ walking }: { walking: boolean }) {
   return (
-    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 12 16" width={walking ? 60 : 54} height={walking ? 84 : 78} style={{ imageRendering: "pixelated" }}>
       <rect x="2" y="0" width="2" height="1" fill="#212121" />
       <rect x="5" y="0" width="2" height="1" fill="#212121" />
       <rect x="8" y="0" width="2" height="1" fill="#212121" />
@@ -89,7 +89,7 @@ function SentinelSprite({ walking }: { walking: boolean }) {
 
 function AtlasSprite({ walking }: { walking: boolean }) {
   return (
-    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 12 16" width={walking ? 60 : 54} height={walking ? 84 : 78} style={{ imageRendering: "pixelated" }}>
       {/* Messy blonde hair */}
       <rect x="1" y="0" width="10" height="4" fill="#FFD54F" />
       <rect x="0" y="1" width="2" height="2" fill="#FFD54F" />
@@ -122,7 +122,7 @@ function AtlasSprite({ walking }: { walking: boolean }) {
 
 function LunaSprite({ walking }: { walking: boolean }) {
   return (
-    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 12 16" width={walking ? 60 : 54} height={walking ? 84 : 78} style={{ imageRendering: "pixelated" }}>
       {/* Long dark hair with purple highlight */}
       <rect x="1" y="0" width="10" height="12" fill="#212121" />
       <rect x="9" y="4" width="1" height="6" fill="#BA68C8" />
@@ -148,7 +148,7 @@ function LunaSprite({ walking }: { walking: boolean }) {
 
 function NovaSprite({ walking }: { walking: boolean }) {
   return (
-    <svg viewBox="0 0 12 16" width={walking ? 40 : 36} height={walking ? 56 : 52} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 12 16" width={walking ? 60 : 54} height={walking ? 84 : 78} style={{ imageRendering: "pixelated" }}>
       {/* Cyan/Pink artistic hair */}
       <rect x="1" y="0" width="5" height="4" fill="#00BCD4" />
       <rect x="6" y="0" width="5" height="4" fill="#E91E63" />
@@ -278,7 +278,7 @@ export function Agent({ id, state }: AgentProps) {
 
   const SpriteComponent = config.sprite;
 
-  const isActive = state === "active";
+  const isActive = state?.toLowerCase() === "active";
   const isWalking = isAmbientWalking;
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -368,7 +368,7 @@ export function Agent({ id, state }: AgentProps) {
       }}
     >
       {(isActive || ambientIcon) && (
-        <div className="speech-bubble animate-float-bubble mb-1 z-10">
+        <div className="speech-bubble animate-float-bubble mb-8 z-10">
           {isActive ? (
             <span className="flex items-center gap-1">
               {config.emoji} <span className="typing-dots" />
@@ -384,14 +384,25 @@ export function Agent({ id, state }: AgentProps) {
         <div 
           className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full blur-[4px] transition-all duration-500"
           style={{
-            width: "32px",
-            height: "12px",
+            width: "48px",
+            height: "18px",
             background: isActive ? "rgba(57, 255, 20, 0.4)" : "rgba(0,0,0,0.15)",
             boxShadow: isActive ? "0 0 12px #39ff1488" : "none",
           }}
         />
 
-        <div className={isWalking ? "walking" : idleAnim}>
+        {/* Screen glow reflected on agent when working */}
+        {isActive && atDesk && (
+          <div 
+            className="absolute inset-0 rounded-full blur-[8px] animate-screen-glow pointer-events-none"
+            style={{
+              background: "radial-gradient(circle, rgba(79, 195, 247, 0.4) 0%, transparent 70%)",
+              zIndex: 1
+            }}
+          />
+        )}
+
+        <div className={(isActive && atDesk) ? "idle-working" : (isWalking ? "walking" : idleAnim)}>
           <SpriteComponent walking={isWalking} />
         </div>
       </div>
@@ -406,7 +417,7 @@ export function Agent({ id, state }: AgentProps) {
           whiteSpace: "nowrap",
         }}
       >
-        {config.name}
+        {id === "alice" ? "Alice (Scrum)" : config.name}
       </div>
 
       <div className="flex items-center gap-0.5 mt-0.5">
@@ -421,10 +432,27 @@ export function Agent({ id, state }: AgentProps) {
         />
         {isActive && (
           <span className="font-pixel" style={{ fontSize: "5px", color: "#39ff14" }}>
-            BUSY
+            {id === "alice" ? "PLANNING" : "BUSY"}
           </span>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes screenGlow {
+          0%, 100% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(1.1); }
+        }
+        @keyframes workingSquash {
+          0%, 100% { transform: scale(1, 1); }
+          50% { transform: scale(1.05, 0.95); }
+        }
+        .animate-screen-glow {
+          animation: screenGlow 2s ease-in-out infinite;
+        }
+        .idle-working {
+          animation: workingSquash 0.5s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }

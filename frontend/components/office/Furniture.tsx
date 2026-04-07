@@ -3,7 +3,7 @@
 /* ─── DESK (pixel art top view) ──────────────── */
 export function Desk({ color = "#a0522d" }: { color?: string }) {
   return (
-    <svg viewBox="0 0 20 14" width={60} height={42} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 20 14" width={90} height={63} style={{ imageRendering: "pixelated" }}>
       {/* Desktop surface */}
       <rect x="0" y="2" width="20" height="10" fill={color} />
       {/* Top edge (highlight) */}
@@ -60,7 +60,7 @@ export function Window() {
 /* ─── WHITEBOARD ─────────────────────────────── */
 export function Whiteboard() {
   return (
-    <svg viewBox="0 0 20 14" width={60} height={42} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 20 14" width={100} height={70} style={{ imageRendering: "pixelated" }}>
       {/* Frame */}
       <rect x="0" y="0" width="20" height="14" fill="#757575" />
       {/* White surface */}
@@ -106,7 +106,7 @@ export function WallClock() {
 /* ─── CONFERENCE TABLE ────────────────────────── */
 export function ConferenceTable() {
   return (
-    <svg viewBox="0 0 48 28" width={144} height={84} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 48 28" width={220} height={128} style={{ imageRendering: "pixelated" }}>
       {/* Table surface */}
       <rect x="2" y="4" width="44" height="20" fill="#8B6914" />
       {/* Top highlight */}
@@ -177,7 +177,7 @@ export function Bookcase() {
 /* ─── SERVER RACK ─────────────────────────────── */
 export function ServerRack() {
   return (
-    <svg viewBox="0 0 16 24" width={48} height={72} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 16 24" width={64} height={96} style={{ imageRendering: "pixelated" }}>
       {/* Cabinet */}
       <rect x="0" y="0" width="16" height="24" fill="#1a1a1a" />
       <rect x="0" y="0" width="16" height="1" fill="#333" />
@@ -219,7 +219,7 @@ export function ServerRack() {
 /* ─── PLANT ───────────────────────────────────── */
 export function Plant() {
   return (
-    <svg viewBox="0 0 10 14" width={30} height={42} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 10 14" width={45} height={63} style={{ imageRendering: "pixelated" }}>
       {/* Pot */}
       <rect x="2" y="10" width="6" height="4" fill="#BF360C" />
       <rect x="1" y="9"  width="8" height="2" fill="#D84315" />
@@ -244,7 +244,7 @@ export function CoffeeMachine() {
         <div className="w-1 h-1 bg-white rounded-full coffee-steam" style={{ animationDelay: "0.8s" }} />
         <div className="w-1 h-1 bg-white rounded-full coffee-steam" style={{ animationDelay: "1.6s" }} />
       </div>
-      <svg viewBox="0 0 10 12" width={30} height={36} style={{ imageRendering: "pixelated" }}>
+      <svg viewBox="0 0 10 12" width={45} height={54} style={{ imageRendering: "pixelated" }}>
         {/* Body */}
         <rect x="1" y="0" width="8" height="12" fill="#424242" />
         <rect x="2" y="1" width="6" height="3" fill="#555" />
@@ -271,7 +271,7 @@ export function CoffeeMachine() {
 /* ─── WATER COOLER ────────────────────────── */
 export function WaterCooler() {
   return (
-    <svg viewBox="0 0 8 16" width={24} height={48} style={{ imageRendering: "pixelated" }}>
+    <svg viewBox="0 0 8 16" width={36} height={72} style={{ imageRendering: "pixelated" }}>
       {/* Base */}
       <rect x="1" y="8" width="6" height="8" fill="#E0E0E0" />
       <rect x="2" y="9" width="4" height="2" fill="#BDBDBD" />

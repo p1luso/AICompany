@@ -5,7 +5,7 @@ import { AgentConfig } from "@/types";
 
 export const AGENT_CONFIGS: Record<string, AgentConfig> = {
   Alice: {
-    name: "Alice",
+    name: "Alice (Scrum Master)",
     color: "#4fc3f7",
     bgColor: "#4fc3f710",
     avatar: "🔍",
@@ -52,6 +52,12 @@ export const ACTION_MESSAGES: Record<string, string> = {
   iniciando: "🚀 Iniciando",
   recibida: "📨 Tarea recibida",
   planificando: "📋 Planificando",
+  en_diseno: "🎨 Diseñando UX/UI",
+  in_progress: "⚙️ Implementando",
+  testing: "🧪 Verificando calidad",
+  validando_seguridad: "🛡️ Auditando seguridad",
+  documentando_release: "📝 Documentando release",
+  moviendo_ticket_to_do: "📋 Priorizando backlog",
   trabajando: "⚙️ Trabajando",
   analizando: "🔍 Analizando",
   documentando: "📝 Documentando",
@@ -60,9 +66,10 @@ export const ACTION_MESSAGES: Record<string, string> = {
   pensando: "💭 Pensando",
   hablando: "💬 Hablando",
   completada: "✅ Completada",
+  idle: "💤 En espera",
   error: "❌ Error",
   conectado: "🔌 Conectado",
-  issues_created: "📋 Issues creados",
+  issues_created: "📋 Tickets creados",
 };
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";

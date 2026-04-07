@@ -8,9 +8,10 @@ interface PixelOfficeProps {
   agents: AgentStatus[];
   onOpenTerminal?: () => void;
   onOpenTaskModal?: () => void;
+  onOpenKanban?: () => void;
 }
 
-export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal }: PixelOfficeProps) {
+export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKanban }: PixelOfficeProps) {
   const alice    = agents.find((a) => a.id === "alice");
   const scribe   = agents.find((a) => a.id === "scribe");
   const sentinel = agents.find((a) => a.id === "sentinel");
@@ -46,44 +47,43 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal }: PixelOf
             }}
           >
             {/* Wall Top Detail */}
-            <div className="absolute top-0 left-0 right-0 h-4 bg-[#5D4037] border-b-2 border-[#3E2723]" />
+            <div className="absolute top-0 left-0 right-0 h-6 bg-[#5D4037] border-b-2 border-[#3E2723]" />
             
             {/* Decorations */}
-            <div className="absolute top-1 left-4 scale-75 opacity-80"><Bookcase /></div>
-            <div className="absolute top-5 left-1/4"><Window /></div>
-            <div className="absolute top-5 left-3/4"><Window /></div>
+            <div className="absolute top-1 left-4 scale-90 opacity-80"><Bookcase /></div>
+            <div className="absolute top-8 left-1/4 scale-110"><Window /></div>
+            <div className="absolute top-8 left-3/4 scale-110"><Window /></div>
             <div className="absolute top-0 left-1/2 -translate-x-1/2 pt-1"><WallClock /></div>
+            
+            <div 
+              className="absolute top-4 left-1/2 -translate-x-1/2 cursor-pointer transition-transform hover:scale-105 z-10"
+              onClick={onOpenKanban}
+              title="Click to open Kanban Board"
+            >
+              <Whiteboard />
+            </div>
 
-            {/* THE THREE CLUSTERS (2x2 desks) */}
-            <div className="absolute inset-0 flex justify-around items-center pt-8 px-4">
-              
-              {/* CLUSTER 1 (Left - DEV) */}
-              <div className="relative w-24 h-24 grid grid-cols-2 gap-1 content-center">
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="absolute -top-4 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center">DEV AREA</div>
-              </div>
+            {/* THE THREE CLUSTERS (2x2 desks) - Absolute positioned to match Waypoints */}
+            
+            {/* CLUSTER 1 (Left - DEV) */}
+            <div className="absolute w-40 h-24 flex gap-6 justify-center" style={{ left: "10%", bottom: "45%" }}>
+              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
+              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
+              <div className="absolute -top-6 left-0 w-full text-[6px] font-pixel text-[#8B6914] text-center">DEV AREA</div>
+            </div>
 
-              {/* CLUSTER 2 (Center - MGMT/DESIGN) */}
-              <div className="relative w-24 h-24 grid grid-cols-2 gap-1 content-center">
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="absolute -top-4 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center">HQ & CREATIVE</div>
-              </div>
+            {/* CLUSTER 2 (Center - MGMT/DESIGN) */}
+            <div className="absolute w-40 h-24 flex gap-6 justify-center" style={{ left: "40%", bottom: "48%" }}>
+              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
+              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
+              <div className="absolute -top-6 left-0 w-full text-[6px] font-pixel text-[#8B6914] text-center">HQ & CREATIVE</div>
+            </div>
 
-              {/* CLUSTER 3 (Right - QA/SYSTEMS) */}
-              <div className="relative w-24 h-24 grid grid-cols-2 gap-1 content-center">
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-                <div className="absolute -top-4 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center">QA & SYSTEMS</div>
-              </div>
-
+            {/* CLUSTER 3 (Right - QA/SYSTEMS) */}
+            <div className="absolute w-40 h-24 flex gap-6 justify-center" style={{ left: "70%", bottom: "45%" }}>
+              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
+              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
+              <div className="absolute -top-6 left-0 w-full text-[6px] font-pixel text-[#8B6914] text-center">QA & SYSTEMS</div>
             </div>
 
             {/* Utilities */}
@@ -101,26 +101,26 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal }: PixelOf
 
           {/* PROJECT ROOM (Narrow right side) */}
           <div 
-            className="w-48 relative overflow-hidden bg-[#e0f1f6]"
+            className="w-56 relative overflow-hidden bg-[#e0f1f6]"
             style={{ border: "4px solid #4fc3f7" }}
           >
             <div className="absolute top-0 left-0 right-0 h-4 bg-[#0288D1]" />
-            <div className="flex flex-col items-center pt-10 gap-8">
-              <div className="scale-75"><ConferenceTable /></div>
+            <div className="flex flex-col items-center pt-10 gap-12">
+              <div className="scale-90"><ConferenceTable /></div>
               <ReportIcon visible={reportVisible} />
-              <div className="mt-auto pb-4"><Plant /></div>
+              <div className="mt-auto pb-4 scale-110"><Plant /></div>
             </div>
           </div>
         </div>
 
         {/* BOTTOM SECTION: Data Center (Full Width) */}
         <div 
-          className="h-32 relative overflow-hidden bg-[#0a0a0a]"
+          className="h-40 relative overflow-visible bg-[#0a0a0a] z-10"
           style={{ border: "4px solid #ef5350" }}
         >
           <div className="absolute top-0 left-0 right-0 h-3 bg-[#B71C1C]" />
           
-          <div className="flex items-center justify-center gap-4 px-4 pt-6">
+          <div className="flex items-center justify-center gap-6 px-4 pt-10">
             <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
             <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
             <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
@@ -139,7 +139,9 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal }: PixelOf
             </div>
           </div>
 
-          <Agent id="sentinel" state={sentinel?.state ?? "idle"} />
+          <div className="absolute inset-0 pointer-events-none overflow-visible">
+            <Agent id="sentinel" state={sentinel?.state ?? "idle"} />
+          </div>
           
           {/* Cables and Grills */}
           <div className="absolute bottom-0 left-0 right-0 h-2 bg-[#1a1a1a] opacity-50" style={{ backgroundImage: "repeating-linear-gradient(90deg, #333, #333 4px, transparent 4px, transparent 8px)" }} />

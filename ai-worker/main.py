@@ -15,6 +15,7 @@ from config import settings
 from models import TaskRequest, TaskResponse, HealthResponse, AgentEvent
 from redis_events import event_publisher
 from agents import AgencyTeam
+from persistence import load_tasks, save_tasks
 
 # Configurar logging
 logging.basicConfig(
@@ -34,9 +35,12 @@ async def lifespan(app: FastAPI):
     """
     # Startup
     logger.info("🚀 AI Worker iniciando...")
+    global tasks_store
+    tasks_store = load_tasks()
     yield
     # Shutdown
     logger.info("🛑 AI Worker deteniendo...")
+    save_tasks(tasks_store)
     event_publisher.close()
 
 
@@ -96,6 +100,7 @@ async def create_task(
         "status": "pending",
         "request": request.model_dump(),
     }
+    save_tasks(tasks_store)
 
     # Publicar evento inicial
     event_publisher.publish_event(
@@ -142,6 +147,7 @@ def execute_crew_task(
 
         # Actualizar estado
         tasks_store[task_id]["status"] = "processing"
+        save_tasks(tasks_store)
 
         # Crear equipo de agentes
         agency_team = AgencyTeam(task_id=task_id)
@@ -155,6 +161,7 @@ def execute_crew_task(
 
         # Guardar resultado
         tasks_store[task_id].update(result)
+        save_tasks(tasks_store)
 
         logger.info(f"✅ Tarea completada: {task_id}")
 
@@ -162,6 +169,7 @@ def execute_crew_task(
         logger.error(f"❌ Error en ejecute_crew_task: {e}")
         tasks_store[task_id]["status"] = "failed"
         tasks_store[task_id]["error"] = str(e)
+        save_tasks(tasks_store)
 
 
 @app.get("/api/task/{task_id}", response_model=Optional[dict])

@@ -30,17 +30,29 @@ export const useAgentStore = create<AgentStore>((set) => ({
     let normalizedId = id.toLowerCase();
     if (normalizedId === "manager") normalizedId = "alice";
 
-    set((state) => ({
-      agents: {
-        ...state.agents,
-        [normalizedId]: {
-          ...state.agents[normalizedId],
-          id: normalizedId,
-          status,
-          lastSeen: Date.now(),
-        },
-      },
-    }));
+    set((state) => {
+      const updatedAgents = { ...state.agents };
+      const now = Date.now();
+
+      // If becoming ACTIVE, set all others to IDLE first
+      if (status === "ACTIVE") {
+        Object.keys(updatedAgents).forEach((agentId) => {
+          updatedAgents[agentId] = {
+            ...updatedAgents[agentId],
+            status: "IDLE",
+          };
+        });
+      }
+
+      updatedAgents[normalizedId] = {
+        ...updatedAgents[normalizedId],
+        id: normalizedId,
+        status,
+        lastSeen: now,
+      };
+
+      return { agents: updatedAgents };
+    });
   },
   tick: () =>
     set((state) => {
@@ -49,7 +61,7 @@ export const useAgentStore = create<AgentStore>((set) => ({
       let changed = false;
 
       Object.values(updatedAgents).forEach((agent) => {
-        if (agent.status === "ACTIVE" && now - agent.lastSeen > 15000) {
+        if (agent.status === "ACTIVE" && now - agent.lastSeen > 60000) {
           updatedAgents[agent.id] = { ...agent, status: "IDLE" };
           changed = true;
         }

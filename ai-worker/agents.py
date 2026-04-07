@@ -64,14 +64,15 @@ def write_memory_file(filename: str, content: str, agent_name: str) -> bool:
 
 def create_manager_agent(llm: LLM) -> Agent:
     return Agent(
-        role="Alice / CEO & Scrum Master",
+        role="Alice (Scrum Master)",
         goal=(
-            "Liderar la compañía y coordinar el equipo. Desglosar requerimientos en tareas estratégicas, "
-            "asignar responsabilidades y garantizar que la visión del producto se cumpla con excelencia."
+            "Liderar la agilidad del equipo. Desglosar requerimientos en tickets de backlog, "
+            "coordinar el flujo de trabajo (Kanban) y asegurar que cada etapa se cumpla según el plan."
         ),
         backstory=(
-            "Eres Alice, la fundadora y CEO de AI Company. Tu visión estratégica y capacidad de liderazgo "
-            "son el motor de la empresa. Eres experta en agilidad y gestión de equipos de alto rendimiento."
+            "Eres Alice, la Scrum Master de AI Company. Tu obsesión es el flujo de valor. "
+            "Eres experta en metodologías ágiles y en mantener al equipo sincronizado. "
+            "No solo gestionas tareas, optimizas el sistema de trabajo."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=True,
@@ -201,11 +202,12 @@ class AgencyTeam:
         planner = Task(
             description=(
                 f"Analiza la tarea: '{title}' y la descripción: '{description}'.\n"
-                f"Desglósala en EXACTAMENTE 3 mini-tareas técnicas.\n"
+                f"Actúa como Scrum Master Senior. Descompón este requerimiento en un backlog COMPLETO "
+                f"de entre 3 y 10 mini-tareas técnicas granulares para el equipo.\n"
                 f"Responde ÚNICAMENTE con JSON en este formato:\n"
                 f'{{"issues": [{{"id": "issue1", "title": "Tarea 1"}}, ...]}}'
             ),
-            expected_output="Un objeto JSON con la lista de 3 issues.",
+            expected_output="Un objeto JSON con la lista de tareas técnicas (3-10 issues).",
             agent=self.manager
         )
 
@@ -237,8 +239,8 @@ class AgencyTeam:
             # ── 1. Notificar inicio ──────────────────────
             event_publisher.publish_event(
                 agent="Alice",
-                action="iniciando",
-                message=f"Iniciando tarea: {title}",
+                action="moviendo_ticket_to_do",
+                message=f"Alice ha priorizado el backlog para: {title}",
                 task_id=self.task_id,
                 metadata={"priority": priority},
             )
@@ -257,8 +259,8 @@ class AgencyTeam:
             issue_p = issues[0] if len(issues) > 0 else {"id": "p1", "title": "Planificación"}
             event_publisher.publish_event(
                 agent="Alice",
-                action="trabajando",
-                message=f"Alice iniciando: {issue_p['title']}",
+                action="planificando",
+                message=f"Alice (Scrum Master) definiendo estrategia: {issue_p['title']}",
                 task_id=self.task_id,
                 metadata={"issue_id": issue_p["id"], "issue_status": "processing"},
             )
@@ -271,19 +273,26 @@ class AgencyTeam:
                 ),
                 expected_output="Estrategia de proyecto con hitos clave y pasos de ejecución.",
                 agent=self.manager,
-                callback=lambda o: event_publisher.publish_event(
-                    agent="Alice", action="completada",
-                    message=f"Alice finalizó: {issue_p['title']}",
-                    task_id=self.task_id,
-                    metadata={"issue_id": issue_p["id"], "issue_status": "completed"},
-                ),
+                callback=lambda o: [
+                    event_publisher.publish_event(
+                        agent="Alice", action="completada",
+                        message=f"Alice finalizó: {issue_p['title']}",
+                        task_id=self.task_id,
+                        metadata={"issue_id": issue_p["id"], "issue_status": "completed"},
+                    ),
+                    event_publisher.publish_event(
+                        agent="Alice", action="idle",
+                        message="Alice terminó su turno",
+                        task_id=self.task_id,
+                    )
+                ],
             )
 
             # ── Issue 2: Nova diseña ──────────────────
             event_publisher.publish_event(
                 agent="Nova",
-                action="trabajando",
-                message="Nova iniciando el concepto visual y UX/UI",
+                action="en_diseno",
+                message="Nova (Creative) iniciando el concepto visual y UX/UI",
                 task_id=self.task_id,
             )
 
@@ -295,19 +304,26 @@ class AgencyTeam:
                 expected_output="Concepto de diseño visual y guía de UX detallada.",
                 agent=self.nova,
                 context=[task_planning],
-                callback=lambda o: event_publisher.publish_event(
-                    agent="Nova", action="completada",
-                    message="Nova completó el diseño creativo",
-                    task_id=self.task_id,
-                ),
+                callback=lambda o: [
+                    event_publisher.publish_event(
+                        agent="Nova", action="completada",
+                        message="Nova completó el diseño creativo",
+                        task_id=self.task_id,
+                    ),
+                    event_publisher.publish_event(
+                        agent="Nova", action="idle",
+                        message="Nova terminó su turno",
+                        task_id=self.task_id,
+                    )
+                ],
             )
 
             # ── Issue 3: Atlas implementa ─────────────
             issue_d = issues[1] if len(issues) > 1 else {"id": "d1", "title": "Implementación"}
             event_publisher.publish_event(
                 agent="Atlas",
-                action="trabajando",
-                message=f"Atlas iniciando: {issue_d['title']}",
+                action="in_progress",
+                message=f"Atlas (Lead Dev) en ejecución técnica: {issue_d['title']}",
                 task_id=self.task_id,
                 metadata={"issue_id": issue_d["id"], "issue_status": "processing"},
             )
@@ -321,20 +337,27 @@ class AgencyTeam:
                 expected_output="Código implementado, validado y documentado internamente.",
                 agent=self.atlas,
                 context=[task_planning, task_design],
-                callback=lambda o: event_publisher.publish_event(
-                    agent="Atlas", action="completada",
-                    message=f"Atlas completó la implementación técnica: {issue_d['title']}",
-                    task_id=self.task_id,
-                    metadata={"issue_id": issue_d["id"], "issue_status": "completed"},
-                ),
+                callback=lambda o: [
+                    event_publisher.publish_event(
+                        agent="Atlas", action="completada",
+                        message=f"Atlas completó la implementación técnica: {issue_d['title']}",
+                        task_id=self.task_id,
+                        metadata={"issue_id": issue_d["id"], "issue_status": "completed"},
+                    ),
+                    event_publisher.publish_event(
+                        agent="Atlas", action="idle",
+                        message="Atlas terminó su turno",
+                        task_id=self.task_id,
+                    )
+                ],
             )
 
             # ── Issue 4: Luna valida ──────────────────
             issue_t = issues[2] if len(issues) > 2 else {"id": "t1", "title": "Testing"}
             event_publisher.publish_event(
                 agent="Luna",
-                action="trabajando",
-                message=f"Luna verificando calidad: {issue_t['title']}",
+                action="testing",
+                message=f"Luna (QA) verificando calidad: {issue_t['title']}",
                 task_id=self.task_id,
                 metadata={"issue_id": issue_t["id"], "issue_status": "processing"},
             )
@@ -348,18 +371,25 @@ class AgencyTeam:
                 expected_output="Reporte de calidad final con validación de bugs y UX.",
                 agent=self.luna,
                 context=[task_development],
-                callback=lambda o: event_publisher.publish_event(
-                    agent="Luna", action="completada",
-                    message="Luna completó la validación de calidad",
-                    task_id=self.task_id,
-                    metadata={"issue_id": issue_t["id"], "issue_status": "completed"},
-                ),
+                callback=lambda o: [
+                    event_publisher.publish_event(
+                        agent="Luna", action="completada",
+                        message="Luna completó la validación de calidad",
+                        task_id=self.task_id,
+                        metadata={"issue_id": issue_t["id"], "issue_status": "completed"},
+                    ),
+                    event_publisher.publish_event(
+                        agent="Luna", action="idle",
+                        message="Luna terminó su turno",
+                        task_id=self.task_id,
+                    )
+                ],
             )
 
             # ── Issue 5: Sentinel SecOps ──────────────
             event_publisher.publish_event(
                 agent="Sentinel",
-                action="validando",
+                action="validando_seguridad",
                 message="Sentinel auditando infraestructura y seguridad",
                 task_id=self.task_id,
             )
@@ -372,17 +402,24 @@ class AgencyTeam:
                 expected_output="Reporte de Seguridad y Sistemas: APROBADO/RECHAZADO con observaciones.",
                 agent=self.sentinel,
                 context=[task_development, task_testing],
-                callback=lambda o: event_publisher.publish_event(
-                    agent="Sentinel", action="completada",
-                    message="Sentinel finalizó la auditoría de sistemas",
-                    task_id=self.task_id,
-                ),
+                callback=lambda o: [
+                    event_publisher.publish_event(
+                        agent="Sentinel", action="completada",
+                        message="Sentinel finalizó la auditoría de sistemas",
+                        task_id=self.task_id,
+                    ),
+                    event_publisher.publish_event(
+                        agent="Sentinel", action="idle",
+                        message="Sentinel terminó su turno",
+                        task_id=self.task_id,
+                    )
+                ],
             )
 
             # ── Issue 6: Scribe documenta ─────────────
             event_publisher.publish_event(
                 agent="Scribe",
-                action="documentando",
+                action="documentando_release",
                 message="Scribe preparando el release ejecutivo final",
                 task_id=self.task_id,
             )
@@ -395,11 +432,23 @@ class AgencyTeam:
                 expected_output="Documentación completa, manuales y release notes del proyecto.",
                 agent=self.specialist,
                 context=[task_planning, task_design, task_development, task_testing, task_security],
-                callback=lambda o: event_publisher.publish_event(
-                    agent="Scribe", action="completada",
-                    message="Scribe completó el paquete de documentación funcional",
-                    task_id=self.task_id,
-                ),
+                callback=lambda o: [
+                    event_publisher.publish_event(
+                        agent="Scribe", action="completada",
+                        message="Scribe completó el paquete de documentación funcional",
+                        task_id=self.task_id,
+                    ),
+                    event_publisher.publish_event(
+                        agent="Scribe", action="idle",
+                        message="Scribe terminó su turno",
+                        task_id=self.task_id,
+                    ),
+                    event_publisher.publish_event(
+                        agent="Alice", action="idle",
+                        message="Ciclo de Alice completado",
+                        task_id=self.task_id,
+                    )
+                ],
             )
 
             # ── Crew Execution ────────────────────────
@@ -429,6 +478,12 @@ class AgencyTeam:
                 agent="Alice",
                 action="completada",
                 message=f"Proyecto finalizado con éxito: {title} (Validado por 6 departamentos)",
+                task_id=self.task_id,
+            )
+            event_publisher.publish_event(
+                agent="Alice",
+                action="idle",
+                message="Alice finalizó el proyecto",
                 task_id=self.task_id,
             )
 

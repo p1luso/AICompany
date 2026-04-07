@@ -22,6 +22,7 @@ interface TaskStore {
   setError: (error: string) => void;
   setLoading: (loading: boolean) => void;
   updateTaskFromEvent: (event: AgentEvent) => void;
+  hydrateTasks: (tasks: StoredTask[]) => void;
   reset: () => void;
 }
 
@@ -136,7 +137,12 @@ export const useTaskStore = create<TaskStore>((set) => ({
       let newStatus = task.status;
       const action = event.action;
 
-      const processingActions = ["iniciando", "planificando", "trabajando", "revisando", "documentando", "validando"];
+      const processingActions = [
+        "iniciando", "planificando", "en_diseno", "in_progress", 
+        "testing", "validando_seguridad", "documentando_release", 
+        "moviendo_ticket_to_do", "trabajando", "revisando", 
+        "documentando", "validando"
+      ];
       if (processingActions.includes(action)) {
         newStatus = "processing";
       } else if (action === "completada") {
@@ -183,6 +189,34 @@ export const useTaskStore = create<TaskStore>((set) => ({
         tasks: { ...state.tasks, [event.task_id!]: updatedTask },
         currentTask: isCurrentTask ? updatedTask : state.currentTask,
         isLoading: newStatus === "processing",
+      };
+    });
+  },
+
+  // Cargar tareas existentes desde el backend (Reemplazo total)
+  hydrateTasks: (tasksList: StoredTask[]) => {
+    set((state) => {
+      // Filtrar tareas que no tengan datos válidos (evitar 'Sin Título' fantasmas)
+      const validTasks = tasksList.filter(t => t.id && t.request && t.request.title);
+      
+      const taskMap: Record<string, StoredTask> = {};
+      validTasks.forEach((t) => {
+        taskMap[t.id] = {
+          ...t,
+          events: t.events || [],
+          issues: t.issues || [],
+        };
+      });
+
+      // Si no hay tarea actual, poner la más reciente del backend
+      let currentTask = null;
+      if (validTasks.length > 0) {
+        currentTask = validTasks.sort((a, b) => b.createdAt - a.createdAt)[0];
+      }
+
+      return { 
+        tasks: taskMap,
+        currentTask
       };
     });
   },

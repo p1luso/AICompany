@@ -10,6 +10,8 @@ import { TerminalLogs } from "../panels/TerminalLogs";
 import { TaskModal } from "../panels/TaskModal";
 import { Sidebar } from "./Sidebar";
 import { KanbanBoard } from "../panels/KanbanBoard";
+import { useTaskStore } from "@/store/taskStore";
+import { API_BASE_URL } from "@/lib/constants";
 
 /* ─── AGENT STATUS BADGE ─────────────────────────────── */
 function StatusBadge({ id }: { id: "alice" | "scribe" | "sentinel" | "atlas" | "luna" | "nova" }) {
@@ -61,6 +63,27 @@ export function MissionControl() {
     return () => clearInterval(timer);
   }, [tick]);
 
+  const { hydrateTasks } = useTaskStore();
+
+  // Rehidratar tareas desde el backend al montar
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/tasks`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.tasks) {
+            hydrateTasks(data.tasks);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error rehidratando tareas:", error);
+      }
+    };
+    
+    fetchTasks();
+  }, [hydrateTasks]);
+
   const activeAgents = Object.values(agentsStatus).filter(a => a.status === "ACTIVE");
   const activeCount = activeAgents.length;
 
@@ -76,8 +99,20 @@ export function MissionControl() {
     prevActiveCount.current = activeCount;
   }, [activeCount, startTypingLoop, stopTypingLoop, playSuccess]);
 
-  // Compatibility with PixelOffice agent tracker (for animations/walking)
-  const agents = useAgentTracker();
+  // SINCRO REAL-TIME: Combinar datos de WebSocket (Store) con Polling (Tracker)
+  const storeAgents = useAgentStore((state) => state.agents);
+  const trackerAgents = useAgentTracker();
+
+  const officeAgents = trackerAgents.map(ta => {
+    const sAgent = storeAgents[ta.id];
+    // Prioridad absoluta al estado ACTIVE del WebSocket
+    const isStoreActive = sAgent?.status === "ACTIVE";
+    
+    return {
+      ...ta,
+      state: isStoreActive ? "active" : ta.state
+    };
+  });
 
   return (
     <div 
@@ -145,9 +180,10 @@ export function MissionControl() {
       <div className="flex flex-1 overflow-hidden gap-0">
         <div className="relative flex-1 overflow-hidden" style={{ borderRight: "4px solid #0f3460" }}>
           <PixelOffice
-            agents={agents}
+            agents={officeAgents}
             onOpenTerminal={() => setTerminalOpen(true)}
             onOpenTaskModal={() => setTaskModalOpen(true)}
+            onOpenKanban={() => setKanbanOpen(true)}
           />
         </div>
 
