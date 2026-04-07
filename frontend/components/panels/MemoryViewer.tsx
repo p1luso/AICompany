@@ -38,9 +38,11 @@ export function MemoryViewer() {
   // Context Menu State
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, path: string } | null>(null);
 
-  // Load tree when the modal is opened
+  // Load tree when the modal is opened, and poll for updates every 3 seconds
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+
+    const loadTree = () => {
       setLoading(true);
       fetch("/api/memory")
         .then((res) => res.json())
@@ -49,7 +51,14 @@ export function MemoryViewer() {
         })
         .catch((err) => console.error("Error fetching memory tree", err))
         .finally(() => setLoading(false));
-    }
+    };
+
+    // Initial load
+    loadTree();
+
+    // Poll every 2 seconds for real-time updates
+    const interval = setInterval(loadTree, 2000);
+    return () => clearInterval(interval);
   }, [open]);
 
   // Fetch content for the selected file

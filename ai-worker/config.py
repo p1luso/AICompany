@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://host.docker.internal:11434"
 
     # Model Routing: Arquitectura Híbrida (Gemini/OpenAI + Ollama)
-    MODEL_ARCHITECT: str = "gemini/gemini-2.5-pro"   # Arquitectura (Cloud)
+    MODEL_ARCHITECT: str = "ollama/llama3.2:latest"  # Arquitectura (Local - rápido para scaffold)
     MODEL_DESIGNER: str = "gemini/gemini-2.5-flash"  # UI/UX (Cloud)
     MODEL_QA: str = "openai/gpt-4o-mini"             # SDET/Tester (Cloud)
     MODEL_MANAGER: str = "ollama/llama3.2:latest"    # Scrum Master (Local)

@@ -222,6 +222,8 @@ class AgencyTeam:
         }
 
         sanitized = []
+        archie_issues = []
+
         for i in issues:
             raw_agent = str(i.get("assignedAgent", "")).lower().strip()
             final_agent = "atlas"
@@ -233,9 +235,44 @@ class AgencyTeam:
 
             i["assignedAgent"] = final_agent
             i["status"] = "pending"
-            sanitized.append(i)
 
-        return sanitized
+            # Separar issues de Archie
+            if final_agent == "archie":
+                archie_issues.append(i)
+            else:
+                sanitized.append(i)
+
+        # GARANTIZAR: El PRIMER issue de Archie es SIEMPRE el scaffold (estructura base)
+        if archie_issues:
+            # Buscar si ya hay un scaffold entre los issues de Archie
+            has_scaffold = any(
+                "scaffold" in str(issue.get("title", "")).lower()
+                or "estructura" in str(issue.get("title", "")).lower()
+                for issue in archie_issues
+            )
+
+            if not has_scaffold:
+                # Si no hay scaffold explícito, crear uno como PRIMER issue
+                scaffold_issue = {
+                    "id": "scaffold-001",
+                    "title": "Scaffold: Crear estructura de carpetas y archivos base del proyecto",
+                    "assignedAgent": "archie",
+                    "status": "pending"
+                }
+                archie_issues.insert(0, scaffold_issue)
+            else:
+                # Si hay scaffold, asegurar que esté al inicio
+                scaffold_idx = next(
+                    (i for i, issue in enumerate(archie_issues)
+                     if "scaffold" in str(issue.get("title", "")).lower() or "estructura" in str(issue.get("title", "")).lower()),
+                    -1
+                )
+                if scaffold_idx > 0:
+                    scaffold = archie_issues.pop(scaffold_idx)
+                    archie_issues.insert(0, scaffold)
+
+        # Archie issues al inicio
+        return archie_issues + sanitized
 
     def decompose_task(self, title: str, description: str) -> List[Dict[str, str]]:
         logger.info(f"🔍 Alice (Manager) analizando: {title}")

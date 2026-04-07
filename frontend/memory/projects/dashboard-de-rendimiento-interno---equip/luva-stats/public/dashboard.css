@@ -1,0 +1,99 @@
+
+/* Estilos generales del cuerpo */
+body {
+    font-family: 'Orbitron', sans-serif; /* Fuente futurista */
+    background-color: #0a0a0a; /* Fondo oscuro */
+    color: #00ffcc; /* Texto cian brillante */
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Evita barras de desplazamiento no deseadas */
+    background-image: url('command-center.jpg'); /* Imagen de fondo del centro de mando */
+    background-size: cover; /* Cubrir todo el fondo */
+    background-position: center; /* Centrar la imagen */
+    background-repeat: no-repeat; /* No repetir la imagen */
+}
+
+/* Contenedor principal del dashboard */
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.7); /* Superposición oscura semitransparente */
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.5); /* Sombra brillante cian */
+}
+
+/* Encabezado del dashboard */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 15px;
+    border-bottom: 2px solid #00ffcc;
+    box-shadow: 0 5px 15px rgba(0, 255, 204, 0.3);
+}
+
+.header h1 {
+    font-size: 2.5em;
+    text-shadow: 0 0 10px #00ffcc;
+}
+
+/* Sección de métricas */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    flex-grow: 1;
+}
+
+.metric-card {
+    background: rgba(10, 20, 30, 0.8);
+    border: 1px solid #00ffcc;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+    transition: transform 0.3s ease-in-out;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 25px rgba(0, 255, 204, 0.7);
+}
+
+.metric-card h2 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #66ffff; /* Azul cian claro */
+}
+
+.metric-card p {
+    font-size: 2em;
+    font-weight: bold;
+    color: #00ffcc;
+}
+
+/* Estilos para gráficos (ej. usando un div placeholder) */
+.chart-container {
+    background: rgba(10, 20, 30, 0.8);
+    border: 1px solid #00ffcc;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 0 15px rgba(0, 255, 204, 0.4);
+    margin-top: 20px;
+}
+
+.chart-container h2 {
+    text-align: center;
+    color: #66ffff;
+    margin-bottom: 15px;
+}
+
+/* Pie de página */
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 10px;
+    border-top: 1px solid #00ffcc;
+    font-size: 0.8em;
+    color: #99ffff;
+}
