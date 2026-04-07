@@ -21,7 +21,7 @@ export function MemoryViewer() {
   useEffect(() => {
     if (open) {
       setLoading(true);
-      fetch(`${API_BASE_URL || "http://localhost:8000"}/api/memory`)
+      fetch("/api/memory")
         .then((res) => {
           if (!res.ok) throw new Error("Failed to load");
           return res.json();
@@ -46,7 +46,7 @@ export function MemoryViewer() {
   // Fetch content for the selected file
   useEffect(() => {
     if (selectedFile && !selectedFile.content) {
-      fetch(`${API_BASE_URL || "http://localhost:8000"}/api/memory/${selectedFile.name}`)
+      fetch(`/api/memory/${selectedFile.name}`)
         .then(res => res.json())
         .then(data => {
           if (data.content) {
@@ -174,9 +174,25 @@ export function MemoryViewer() {
               borderBottom: "2px solid #fff",
             }}
           >
-            <div className="flex-1 overflow-y-auto p-4 prose prose-sm prose-slate max-w-none">
+            <div 
+              className="flex-1 overflow-y-auto p-4 max-w-none"
+              style={{ color: "#000" }} // Force black text for Win95 area
+            >
               {selectedFile ? (
-                <ReactMarkdown>{selectedFile.content}</ReactMarkdown>
+                <div className="markdown-content">
+                  <ReactMarkdown
+                    components={{
+                      h1: ({node, ...props}) => <h1 style={{fontSize: "14px", fontWeight: "bold", marginBottom: "10px", borderBottom: "1px solid #ccc"}} {...props} />,
+                      h2: ({node, ...props}) => <h2 style={{fontSize: "12px", fontWeight: "bold", marginTop: "15px", marginBottom: "5px"}} {...props} />,
+                      p: ({node, ...props}) => <p style={{fontSize: "10px", lineHeight: "1.4", marginBottom: "10px"}} {...props} />,
+                      li: ({node, ...props}) => <li style={{fontSize: "10px", marginBottom: "4px"}} {...props} />,
+                      ul: ({node, ...props}) => <ul style={{paddingLeft: "15px", marginBottom: "10px", listStyleType: "square"}} {...props} />,
+                      code: ({node, ...props}) => <code style={{background: "#eee", padding: "2px 4px", borderRadius: "2px", fontSize: "9px", fontFamily: "monospace"}} {...props} />,
+                    }}
+                  >
+                    {selectedFile.content}
+                  </ReactMarkdown>
+                </div>
               ) : (
                 <div className="text-gray-400 font-pixel text-[10px] text-center mt-10">
                   Selecciona un archivo
