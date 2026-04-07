@@ -3,6 +3,7 @@
  */
 import { useEffect, useRef, useCallback, useState } from "react";
 import { AgentEvent } from "@/types";
+import { useAgentStore } from "@/store/agentStore";
 
 interface UseWebSocketOptions {
   url: string;
@@ -52,6 +53,19 @@ export function useWebSocket({
         try {
           const data = JSON.parse(event.data) as AgentEvent;
           onMessage?.(data);
+
+          // Update agent status in global store
+          if (data.agent) {
+            const { updateAgent } = useAgentStore.getState();
+            const activeActions = ["iniciando", "planificando", "trabajando", "revisando", "documentando", "validando"];
+            const idleActions = ["completada", "error"];
+
+            if (activeActions.includes(data.action)) {
+              updateAgent(data.agent, "ACTIVE");
+            } else if (idleActions.includes(data.action)) {
+              updateAgent(data.agent, "IDLE");
+            }
+          }
         } catch (error) {
           console.error("Error parseando mensaje WebSocket:", error);
         }

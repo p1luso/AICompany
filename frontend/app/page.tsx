@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 
 const MissionControl = dynamic(
-  () => import("@/components/MissionControl").then((m) => ({ default: m.MissionControl })),
+  () => import("@/components/layout/MissionControl").then((m) => ({ default: m.MissionControl })),
   { ssr: false, loading: () => null }
 );
 
