@@ -395,6 +395,7 @@ class AgencyTeam:
                 # Definir contexto (depender de la tarea anterior para secuencia)
                 context = [crew_tasks[-1]] if crew_tasks else []
                 
+                agent_name_lower = agent_label.lower()
                 t = Task(
                     description=(
                         f"ISSUE: {issue['title']}\n"
@@ -402,11 +403,15 @@ class AgencyTeam:
                         f"MANDATO PARA {agent_label}: DEBES ejecutar esta tarea usando tus HERRAMIENTAS de terminal "
                         f"y escritura de archivos. Está PROHIBIDO responder solo con texto sin haber realizado "
                         f"cambios físicos en el disco (/app/projects/...). "
-                        f"Si la tarea requiere crear código, usa 'file_writer'. Si requiere comandos, usa 'terminal_executor'."
+                        f"Si la tarea requiere crear código, usa 'file_writer'. Si requiere comandos, usa 'terminal_executor'.\n\n"
+                        f"PASO FINAL OBLIGATORIO: Al terminar, usa 'file_writer' para guardar un resumen de lo que hiciste "
+                        f"en '/memory/{agent_name_lower}_outbox/resumen.md'. Incluye: qué hiciste, archivos creados/modificados, "
+                        f"y resultado de comandos ejecutados."
                     ),
                     expected_output=(
                         f"Evidencia física de la tarea '{issue['title']}' en el disco. "
-                        f"Resultados tangibles de la ejecución de comandos o creación de archivos."
+                        f"Resultados tangibles de la ejecución de comandos o creación de archivos. "
+                        f"Resumen guardado en /memory/{agent_name_lower}_outbox/resumen.md."
                     ),
                     agent=agent_obj,
                     context=context,

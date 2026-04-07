@@ -268,6 +268,89 @@ export function CoffeeMachine() {
   );
 }
 
+/* ─── CEO DESK (Premium executive desk) ──── */
+export function CeoDesk() {
+  return (
+    <svg viewBox="0 0 28 18" width={112} height={72} style={{ imageRendering: "pixelated" }}>
+      {/* Desktop surface — dark mahogany */}
+      <rect x="0" y="3" width="28" height="12" fill="#4E342E" />
+      <rect x="0" y="3" width="28" height="2" fill="#6D4C41" />
+      <rect x="0" y="13" width="28" height="2" fill="#000" opacity="0.15" />
+      {/* Dual monitors */}
+      <rect x="3" y="0" width="9" height="6" fill="#1a1a1a" />
+      <rect x="4" y="1" width="7" height="4" fill="#4fc3f7" opacity="0.7" />
+      <rect x="4" y="1" width="3" height="1" fill="#fff" opacity="0.15" />
+      <rect x="16" y="0" width="9" height="6" fill="#1a1a1a" />
+      <rect x="17" y="1" width="7" height="4" fill="#39ff14" opacity="0.5" />
+      <rect x="17" y="1" width="2" height="1" fill="#fff" opacity="0.15" />
+      {/* Monitor stands */}
+      <rect x="6" y="6" width="3" height="1" fill="#616161" />
+      <rect x="19" y="6" width="3" height="1" fill="#616161" />
+      {/* Keyboard */}
+      <rect x="7" y="8" width="14" height="3" fill="#222" />
+      <rect x="8" y="9" width="1" height="1" fill="#444" />
+      <rect x="10" y="9" width="1" height="1" fill="#444" />
+      <rect x="12" y="9" width="1" height="1" fill="#444" />
+      <rect x="14" y="9" width="1" height="1" fill="#444" />
+      <rect x="16" y="9" width="1" height="1" fill="#444" />
+      <rect x="18" y="9" width="1" height="1" fill="#444" />
+      {/* Mouse */}
+      <rect x="23" y="9" width="3" height="2" fill="#333" />
+      {/* Gold nameplate */}
+      <rect x="10" y="12" width="8" height="2" fill="#FFD700" />
+      <rect x="11" y="12" width="6" height="1" fill="#FFF176" opacity="0.4" />
+      {/* Mug */}
+      <rect x="1" y="7" width="3" height="4" fill="#1565C0" />
+      <rect x="1" y="7" width="3" height="1" fill="#1976D2" />
+      {/* Executive chair */}
+      <rect x="8" y="15" width="12" height="3" fill="#212121" />
+      <rect x="9" y="14" width="10" height="2" fill="#333" />
+      <rect x="9" y="14" width="10" height="1" fill="#424242" />
+      {/* Legs */}
+      <rect x="2" y="15" width="2" height="3" fill="#3E2723" />
+      <rect x="24" y="15" width="2" height="3" fill="#3E2723" />
+    </svg>
+  );
+}
+
+/* ─── FILING CABINET ─────────────────────── */
+export function FilingCabinet() {
+  return (
+    <svg viewBox="0 0 10 16" width={40} height={64} style={{ imageRendering: "pixelated" }}>
+      <rect x="0" y="0" width="10" height="16" fill="#757575" />
+      <rect x="0" y="0" width="10" height="1" fill="#9E9E9E" />
+      {/* Drawers */}
+      {[0, 1, 2].map(i => (
+        <g key={i}>
+          <rect x="1" y={2 + i * 5} width="8" height="4" fill="#616161" />
+          <rect x="1" y={2 + i * 5} width="8" height="1" fill="#757575" />
+          <rect x="4" y={3 + i * 5} width="2" height="1" fill="#9E9E9E" />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* ─── PRINTER ────────────────────────────── */
+export function Printer() {
+  return (
+    <svg viewBox="0 0 12 10" width={48} height={40} style={{ imageRendering: "pixelated" }}>
+      <rect x="0" y="2" width="12" height="6" fill="#E0E0E0" />
+      <rect x="0" y="2" width="12" height="1" fill="#F5F5F5" />
+      {/* Paper tray top */}
+      <rect x="2" y="0" width="8" height="3" fill="#FAFAFA" />
+      <rect x="3" y="0" width="6" height="1" fill="#E0E0E0" />
+      {/* Paper output */}
+      <rect x="3" y="7" width="6" height="3" fill="#FFF" />
+      <rect x="4" y="8" width="4" height="1" fill="#BDBDBD" />
+      {/* Status LED */}
+      <rect x="1" y="4" width="1" height="1" fill="#39ff14" />
+      {/* Buttons */}
+      <rect x="9" y="4" width="2" height="1" fill="#9E9E9E" />
+    </svg>
+  );
+}
+
 /* ─── WATER COOLER ────────────────────────── */
 export function WaterCooler() {
   return (

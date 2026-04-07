@@ -12,12 +12,15 @@ from crewai.tools import tool
 @tool("Terminal Executor")
 def terminal_executor(command: str) -> str:
     """
-    REQUIRED: Ejecuta un comando bash real en el contenedor. 
+    REQUIRED: Ejecuta un comando bash real en el contenedor.
     MANDATORIO para: 'npm install', 'npm run build', 'ls', 'mkdir', etc.
-    Usa esta herramienta cuando debas realizar una acción física o técnica en el sistema.
-    
+    CRITICAL: This terminal is STATELESS. Each call starts fresh in /app.
+    Use '&&' to chain commands that depend on each other,
+    e.g.: 'cd /app/projects/my-app && npm install && npm run build'.
+    Never use 'cd' alone — it will be lost on the next call.
+
     Args:
-        command: El comando bash exacto a ejecutar.
+        command: El comando bash exacto a ejecutar (usa '&&' para encadenar).
     """
     try:
         result = subprocess.run(
@@ -47,14 +50,17 @@ def file_writer(file_path: str, content: str) -> str:
     REQUIRED: Escribe o sobrescribe archivos físicos en el disco.
     MANDATORIO para: crear código (.js, .jsx, .py), archivos de estilo (.css), o documentos (.md).
     Usa esta herramienta SIEMPRE que debas entregar código o documentación técnica.
-    
+    IMPORTANT: Al terminar tu trabajo, SIEMPRE usa esta herramienta para guardar
+    un resumen en /memory/<tu_nombre>_outbox/resumen.md
+
     Args:
         file_path: Ruta absoluta o relativa del archivo (ej: '/app/projects/mi-app/src/App.jsx').
         content: El contenido completo y final que debe tener el archivo.
     """
     try:
+        import os
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         path = Path(file_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
         return f"ÉXITO: Archivo creado en {file_path} ({len(content)} caracteres escritos)."
     except Exception as e:

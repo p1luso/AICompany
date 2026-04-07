@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AgentState } from "@/hooks/useAgentTracker";
 import { WAYPOINTS, Waypoint } from "./config";
+import { useHandoffStore } from "@/store/handoffStore";
 
 /* ─────────────────────────────────────────────────────────────
    SVG PIXEL ART SPRITES (12×16 grid, each unit = 4px rendered)
@@ -322,7 +323,7 @@ export function Agent({ id, state }: AgentProps) {
         const waitTime = Math.floor(Math.random() * (45000 - 15000) + 15000); // 15-45s
 
         timerRef.current = setTimeout(() => {
-          const keys = Object.keys(agentWaypoints).filter(k => k !== 'desk');
+          const keys = Object.keys(agentWaypoints).filter(k => k !== 'desk' && !k.endsWith('_desk') && k !== 'ceo');
           const randomKey = keys[Math.floor(Math.random() * keys.length)];
           const target = agentWaypoints[randomKey];
 
@@ -355,6 +356,94 @@ export function Agent({ id, state }: AgentProps) {
       };
     }
   }, [isActive, id, agentWaypoints, deskWaypoint]);
+
+  // ── HANDOFF ANIMATION: Walk to deliver work to another agent ──
+  const handoff = useHandoffStore((s) => s.activeHandoff);
+  const pickupFromCeo = useHandoffStore((s) => s.pickupFromCeo);
+  const handoffTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    // CEO Pickup: Alice walks to CEO desk, pauses, then walks to her desk
+    if (id === "alice" && pickupFromCeo) {
+      const ceoWp = agentWaypoints.ceo;
+      if (!ceoWp) return;
+
+      // Cancel wandering
+      if (timerRef.current) clearTimeout(timerRef.current);
+
+      setAtDesk(false);
+      setIsAmbientWalking(true);
+      setAmbientIcon("📋");
+      setCurrentPos(ceoWp);
+
+      const t1 = setTimeout(() => {
+        setIsAmbientWalking(false);
+        setAmbientIcon("📄");
+
+        const t2 = setTimeout(() => {
+          setIsAmbientWalking(true);
+          setCurrentPos(deskWaypoint);
+          setAmbientIcon(null);
+
+          const t3 = setTimeout(() => {
+            setIsAmbientWalking(false);
+            setAtDesk(true);
+            useHandoffStore.getState().completeCeoPickup();
+          }, 1500);
+          handoffTimeoutRef.current = t3;
+        }, 1200);
+        handoffTimeoutRef.current = t2;
+      }, 1500);
+      handoffTimeoutRef.current = t1;
+
+      return () => { if (handoffTimeoutRef.current) clearTimeout(handoffTimeoutRef.current); };
+    }
+  }, [pickupFromCeo, id, agentWaypoints, deskWaypoint]);
+
+  useEffect(() => {
+    // Inter-agent handoff: fromAgent walks to toAgent's desk
+    if (!handoff || handoff.phase !== "walking_to_target") return;
+    if (handoff.fromAgent !== id) return;
+
+    const targetDeskKey = `${handoff.toAgent}_desk`;
+    const targetWp = agentWaypoints[targetDeskKey];
+    if (!targetWp) {
+      // No waypoint to target desk, skip
+      useHandoffStore.getState().completeHandoff();
+      return;
+    }
+
+    // Cancel wandering
+    if (timerRef.current) clearTimeout(timerRef.current);
+
+    setAtDesk(false);
+    setIsAmbientWalking(true);
+    setAmbientIcon("📄");
+    setCurrentPos(targetWp);
+
+    const t1 = setTimeout(() => {
+      setIsAmbientWalking(false);
+      useHandoffStore.getState().setDelivering();
+      setAmbientIcon("🤝");
+
+      const t2 = setTimeout(() => {
+        setAmbientIcon(null);
+        setIsAmbientWalking(true);
+        setCurrentPos(deskWaypoint);
+
+        const t3 = setTimeout(() => {
+          setIsAmbientWalking(false);
+          setAtDesk(true);
+          useHandoffStore.getState().completeHandoff();
+        }, 1500);
+        handoffTimeoutRef.current = t3;
+      }, 1200);
+      handoffTimeoutRef.current = t2;
+    }, 1800);
+    handoffTimeoutRef.current = t1;
+
+    return () => { if (handoffTimeoutRef.current) clearTimeout(handoffTimeoutRef.current); };
+  }, [handoff, id, agentWaypoints, deskWaypoint]);
 
   return (
     <div

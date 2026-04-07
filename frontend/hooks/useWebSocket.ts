@@ -5,6 +5,7 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { AgentEvent } from "@/types";
 import { useAgentStore } from "@/store/agentStore";
 import { useTaskStore } from "@/store/taskStore";
+import { useHandoffStore } from "@/store/handoffStore";
 
 interface UseWebSocketOptions {
   url: string;
@@ -70,6 +71,27 @@ export function useWebSocket({
               updateAgent(data.agent, "ACTIVE");
             } else if (idleActions.includes(data.action)) {
               updateAgent(data.agent, "IDLE");
+            }
+          }
+
+          // Handoff animations: when task is first received, Alice picks up from CEO
+          if (data.action === "moviendo_ticket_to_do") {
+            useHandoffStore.getState().triggerCeoPickup();
+          }
+
+          // Handoff: when an agent completes an issue and the next starts
+          if (data.action === "completada" && data.metadata?.issue_id) {
+            // Store the completing agent for potential handoff
+            const completingAgent = data.agent.toLowerCase();
+            // We'll check the next "trabajando" event to trigger the handoff
+            (window as any).__lastCompletedAgent = completingAgent;
+          }
+          if (data.action === "trabajando" && data.metadata?.issue_id) {
+            const startingAgent = data.agent.toLowerCase();
+            const lastCompleted = (window as any).__lastCompletedAgent;
+            if (lastCompleted && lastCompleted !== startingAgent) {
+              useHandoffStore.getState().triggerHandoff(lastCompleted, startingAgent);
+              (window as any).__lastCompletedAgent = null;
             }
           }
 

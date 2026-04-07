@@ -2,16 +2,17 @@
 
 import { AgentStatus } from "@/hooks/useAgentTracker";
 import { Agent } from "./Agent";
-import { Desk, ConferenceTable, ReportIcon, Bookcase, ServerRack, Plant, CoffeeMachine, WaterCooler, Window, Whiteboard, WallClock } from "./Furniture";
+import { Desk, ConferenceTable, ReportIcon, Bookcase, ServerRack, Plant, CoffeeMachine, WaterCooler, Window, Whiteboard, WallClock, CeoDesk, FilingCabinet, Printer } from "./Furniture";
 
 interface PixelOfficeProps {
   agents: AgentStatus[];
   onOpenTerminal?: () => void;
   onOpenTaskModal?: () => void;
   onOpenKanban?: () => void;
+  onOpenDeskModal?: (agentId: string) => void;
 }
 
-export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKanban }: PixelOfficeProps) {
+export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKanban, onOpenDeskModal }: PixelOfficeProps) {
   const alice    = agents.find((a) => a.id === "alice");
   const scribe   = agents.find((a) => a.id === "scribe");
   const sentinel = agents.find((a) => a.id === "sentinel");
@@ -32,15 +33,15 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
       </div>
 
       <div className="absolute inset-0 flex flex-col pt-10 px-2 pb-2 overflow-hidden">
-        
+
         {/* TOP SECTION: Main Office + Project Room */}
         <div className="flex flex-1 gap-2 min-h-0 mb-2">
-          
-          {/* BULLPEN AREA (Yellowish floor) */}
-          <div 
+
+          {/* BULLPEN AREA */}
+          <div
             className="relative flex-1 overflow-hidden"
-            style={{ 
-              background: "#d4b483", // Yellowish floor as in image
+            style={{
+              background: "#d4b483",
               border: "4px solid #8B6914",
               backgroundImage: "radial-gradient(#c2a375 1px, transparent 0)",
               backgroundSize: "20px 20px"
@@ -48,50 +49,95 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
           >
             {/* Wall Top Detail */}
             <div className="absolute top-0 left-0 right-0 h-6 bg-[#5D4037] border-b-2 border-[#3E2723]" />
-            
-            {/* Decorations */}
+
+            {/* ── WALL DECORATIONS ──── */}
             <div className="absolute top-1 left-4 scale-90 opacity-80"><Bookcase /></div>
-            <div className="absolute top-8 left-1/4 scale-110"><Window /></div>
-            <div className="absolute top-8 left-3/4 scale-110"><Window /></div>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 pt-1"><WallClock /></div>
-            
-            <div 
-              className="absolute top-4 left-1/2 -translate-x-1/2 cursor-pointer transition-transform hover:scale-105 z-10"
+            <div className="absolute top-8 left-[18%] scale-110"><Window /></div>
+            <div className="absolute top-8 left-[78%] scale-110"><Window /></div>
+            <div className="absolute top-0 right-8 pt-1"><WallClock /></div>
+
+            {/* Whiteboard → Kanban */}
+            <div
+              className="absolute top-4 left-[55%] cursor-pointer transition-transform hover:scale-105 z-10 group"
               onClick={onOpenKanban}
               title="Click to open Kanban Board"
             >
               <Whiteboard />
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 font-pixel text-[5px] text-[#8B6914] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                KANBAN BOARD
+              </div>
             </div>
 
-            {/* THE THREE CLUSTERS (2x2 desks) - Absolute positioned to match Waypoints */}
-            
-            {/* CLUSTER 1 (Left - DEV) */}
-            <div className="absolute w-40 h-24 flex gap-6 justify-center" style={{ left: "10%", bottom: "45%" }}>
-              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-              <div className="absolute -top-6 left-0 w-full text-[6px] font-pixel text-[#8B6914] text-center">DEV AREA</div>
+            {/* ══════════════════════════════════════════
+                CEO DESK — Top center, your command post
+               ══════════════════════════════════════════ */}
+            <div
+              className="absolute z-10 cursor-pointer group transition-transform hover:scale-105"
+              style={{ top: "32px", left: "50%", transform: "translateX(-50%)" }}
+              onClick={onOpenTaskModal}
+              title="Tu escritorio — Asignar nueva tarea"
+            >
+              <CeoDesk />
+              {/* Gold glow effect */}
+              <div className="absolute -inset-2 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: "radial-gradient(ellipse, rgba(255,215,0,0.15) 0%, transparent 70%)" }}
+              />
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 font-pixel text-[6px] text-[#ffd700] whitespace-nowrap"
+                style={{ textShadow: "0 0 6px #ffd70088" }}
+              >
+                CEO DESK
+              </div>
+              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 font-pixel text-[5px] text-[#ffd700] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap animate-pulse">
+                + NUEVA TAREA
+              </div>
             </div>
 
-            {/* CLUSTER 2 (Center - MGMT/DESIGN) */}
-            <div className="absolute w-40 h-24 flex gap-6 justify-center" style={{ left: "40%", bottom: "48%" }}>
-              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-              <div className="absolute -top-6 left-0 w-full text-[6px] font-pixel text-[#8B6914] text-center">HQ & CREATIVE</div>
+            {/* ── AGENT DESKS — Each clickable to inspect ── */}
+
+            {/* CLUSTER 1 (Left - DEV: Atlas + Luna) */}
+            <div className="absolute flex gap-4" style={{ left: "6%", bottom: "38%" }}>
+              <div className="desk-slot group" onClick={() => onOpenDeskModal?.("atlas")} title="Escritorio de Atlas">
+                <Desk />
+                <div className="desk-label" style={{ color: "#ff9800" }}>ATLAS</div>
+              </div>
+              <div className="desk-slot group" onClick={() => onOpenDeskModal?.("luna")} title="Escritorio de Luna">
+                <Desk />
+                <div className="desk-label" style={{ color: "#ab47bc" }}>LUNA</div>
+              </div>
+              <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">DEV & QA</div>
             </div>
 
-            {/* CLUSTER 3 (Right - QA/SYSTEMS) */}
-            <div className="absolute w-40 h-24 flex gap-6 justify-center" style={{ left: "70%", bottom: "45%" }}>
-              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-              <div className="desk-slot" onClick={onOpenTaskModal}><Desk /></div>
-              <div className="absolute -top-6 left-0 w-full text-[6px] font-pixel text-[#8B6914] text-center">QA & SYSTEMS</div>
+            {/* CLUSTER 2 (Center - MGMT: Alice + Scribe) */}
+            <div className="absolute flex gap-4" style={{ left: "38%", bottom: "42%" }}>
+              <div className="desk-slot group" onClick={() => onOpenDeskModal?.("alice")} title="Escritorio de Alice">
+                <Desk color="#6D4C41" />
+                <div className="desk-label" style={{ color: "#4fc3f7" }}>ALICE</div>
+              </div>
+              <div className="desk-slot group" onClick={() => onOpenDeskModal?.("scribe")} title="Escritorio de Scribe">
+                <Desk color="#6D4C41" />
+                <div className="desk-label" style={{ color: "#81c784" }}>SCRIBE</div>
+              </div>
+              <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">HQ & COMMS</div>
             </div>
 
-            {/* Utilities */}
-            <div className="absolute bottom-4 left-4"><WaterCooler /></div>
-            <div className="absolute bottom-4 right-4"><CoffeeMachine /></div>
+            {/* CLUSTER 3 (Right - CREATIVE: Nova + Sentinel workstation) */}
+            <div className="absolute flex gap-4" style={{ left: "72%", bottom: "38%" }}>
+              <div className="desk-slot group" onClick={() => onOpenDeskModal?.("nova")} title="Escritorio de Nova">
+                <Desk />
+                <div className="desk-label" style={{ color: "#E91E63" }}>NOVA</div>
+              </div>
+              <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">CREATIVE</div>
+            </div>
+
+            {/* ── OFFICE UTILITIES ──── */}
+            <div className="absolute bottom-3 left-3"><WaterCooler /></div>
+            <div className="absolute bottom-3 right-3"><CoffeeMachine /></div>
             <div className="absolute top-2 right-4"><Plant /></div>
+            <div className="absolute bottom-3 left-[30%]"><FilingCabinet /></div>
+            <div className="absolute bottom-3 right-[25%]"><Printer /></div>
+            <div className="absolute bottom-16 right-2"><Plant /></div>
 
-            {/* AGENTS Rendering */}
+            {/* ── AGENTS ──── */}
             <Agent id="alice"    state={alice?.state ?? "idle"} />
             <Agent id="scribe"   state={scribe?.state ?? "idle"} />
             <Agent id="atlas"    state={atlas?.state ?? "idle"} />
@@ -100,7 +146,7 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
           </div>
 
           {/* PROJECT ROOM (Narrow right side) */}
-          <div 
+          <div
             className="w-56 relative overflow-hidden bg-[#e0f1f6]"
             style={{ border: "4px solid #4fc3f7" }}
           >
@@ -114,22 +160,19 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
         </div>
 
         {/* BOTTOM SECTION: Data Center (Full Width) */}
-        <div 
+        <div
           className="h-40 relative overflow-visible bg-[#0a0a0a] z-10"
           style={{ border: "4px solid #ef5350" }}
         >
           <div className="absolute top-0 left-0 right-0 h-3 bg-[#B71C1C]" />
-          
+
           <div className="flex items-center justify-center gap-6 px-4 pt-10">
-            <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
-            <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
-            <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
-            <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
-            <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
-            <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
-            <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
-            <div className="cursor-pointer" onClick={onOpenTerminal}><ServerRack /></div>
-            
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="cursor-pointer hover:brightness-125 transition-all" onClick={onOpenTerminal}>
+                <ServerRack />
+              </div>
+            ))}
+
             <div className="absolute right-4 top-4 flex flex-col items-end gap-1">
               <span className="font-pixel text-[4px] text-[#ef5350]">CRITICAL SYSTEMS ACTIVE</span>
               <div className="flex gap-0.5">
@@ -142,7 +185,7 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
           <div className="absolute inset-0 pointer-events-none overflow-visible">
             <Agent id="sentinel" state={sentinel?.state ?? "idle"} />
           </div>
-          
+
           {/* Cables and Grills */}
           <div className="absolute bottom-0 left-0 right-0 h-2 bg-[#1a1a1a] opacity-50" style={{ backgroundImage: "repeating-linear-gradient(90deg, #333, #333 4px, transparent 4px, transparent 8px)" }} />
         </div>
@@ -159,10 +202,25 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
           opacity: 0.9;
           transition: transform 0.2s;
           cursor: pointer;
+          position: relative;
         }
         .desk-slot:hover {
           transform: scale(1.05);
           filter: brightness(1.2);
+        }
+        .desk-label {
+          position: absolute;
+          bottom: -10px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-family: 'Press Start 2P', monospace;
+          font-size: 4px;
+          white-space: nowrap;
+          opacity: 0.6;
+          transition: opacity 0.2s;
+        }
+        .desk-slot:hover .desk-label {
+          opacity: 1;
         }
       `}</style>
     </div>

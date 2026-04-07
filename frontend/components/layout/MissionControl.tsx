@@ -10,6 +10,7 @@ import { TerminalLogs } from "../panels/TerminalLogs";
 import { TaskModal } from "../panels/TaskModal";
 import { Sidebar } from "./Sidebar";
 import { KanbanBoard } from "../panels/KanbanBoard";
+import { DeskModal } from "../panels/DeskModal";
 import { useTaskStore } from "@/store/taskStore";
 import { API_BASE_URL } from "@/lib/constants";
 
@@ -53,6 +54,7 @@ export function MissionControl() {
   const [terminalOpen, setTerminalOpen] = useState(false);
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [kanbanOpen, setKanbanOpen] = useState(false);
+  const [deskModalAgent, setDeskModalAgent] = useState<string | null>(null);
 
   const { startTypingLoop, stopTypingLoop, playSuccess, unlockAudio } = require("@/lib/audio");
   const prevActiveCount = useRef(0);
@@ -127,6 +129,7 @@ export function MissionControl() {
       <TaskModal open={taskModalOpen} onClose={() => setTaskModalOpen(false)} />
       <MemoryViewer />
       {kanbanOpen && <KanbanBoard onClose={() => setKanbanOpen(false)} />}
+      {deskModalAgent && <DeskModal agentId={deskModalAgent} onClose={() => setDeskModalAgent(null)} />}
 
       {/* HEADER BAR */}
       <header
@@ -184,6 +187,7 @@ export function MissionControl() {
             onOpenTerminal={() => setTerminalOpen(true)}
             onOpenTaskModal={() => setTaskModalOpen(true)}
             onOpenKanban={() => setKanbanOpen(true)}
+            onOpenDeskModal={(agentId) => setDeskModalAgent(agentId)}
           />
         </div>
 
