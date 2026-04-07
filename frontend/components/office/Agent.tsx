@@ -315,7 +315,7 @@ export function Agent({ id, state }: AgentProps) {
       const t = setTimeout(() => {
         setIsAmbientWalking(false);
         setAtDesk(true);
-      }, 1000);
+      }, 1200);
       return () => clearTimeout(t);
     } else {
       const startWandering = () => {
@@ -360,9 +360,9 @@ export function Agent({ id, state }: AgentProps) {
     <div
       className="absolute flex flex-col items-center pointer-events-none transition-all"
       style={{
-        bottom: `${currentPos.y}px`,
-        left: `${currentPos.x}px`,
-        transitionDuration: isActive ? "1s" : "1.8s",
+        bottom: `${currentPos.y}%`,
+        left: `${currentPos.x}%`,
+        transitionDuration: isActive ? "1.2s" : "1.8s",
         transitionTimingFunction: isActive ? "ease-out" : "ease-in-out",
         zIndex: 50
       }}
@@ -380,18 +380,20 @@ export function Agent({ id, state }: AgentProps) {
       )}
 
       <div className="relative">
+        {/* Status circle under feet */}
+        <div 
+          className="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full blur-[4px] transition-all duration-500"
+          style={{
+            width: "32px",
+            height: "12px",
+            background: isActive ? "rgba(57, 255, 20, 0.4)" : "rgba(0,0,0,0.15)",
+            boxShadow: isActive ? "0 0 12px #39ff1488" : "none",
+          }}
+        />
+
         <div className={isWalking ? "walking" : idleAnim}>
           <SpriteComponent walking={isWalking} />
         </div>
-        <div
-          className="absolute -bottom-1 left-1/2 -translate-x-1/2"
-          style={{
-            width: isWalking ? "28px" : "24px",
-            height: "6px",
-            background: "radial-gradient(ellipse, rgba(0,0,0,0.3) 0%, transparent 70%)",
-            transition: "width 0.3s",
-          }}
-        />
       </div>
 
       <div
