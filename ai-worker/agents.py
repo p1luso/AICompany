@@ -14,7 +14,7 @@ from crewai import Agent, Task, Crew, LLM
 
 from redis_events import event_publisher
 from config import settings
-from tools import terminal_executor, file_writer
+from tools import terminal_executor, file_writer, directory_lister
 
 logger = logging.getLogger(__name__)
 
@@ -66,13 +66,14 @@ def create_manager_agent(llm: LLM) -> Agent:
     return Agent(
         role="Alice (Scrum Master)",
         goal=(
-            "Liderar la agilidad del equipo. Desglosar requerimientos en tickets de backlog, "
-            "coordinar el flujo de trabajo (Kanban) y asegurar que cada etapa se cumpla según el plan."
+            "Liderar la agilidad del equipo. Asegurar que los agentes Atlas, Sentinel y Luna "
+            "utilicen sus herramientas de terminal y archivos para ejecutar tareas REALES. "
+            "Tu éxito se mide por archivos creados y comandos ejecutados, NO por reportes escritos."
         ),
         backstory=(
-            "Eres Alice, la Scrum Master de AI Company. Tu obsesión es el flujo de valor. "
-            "Eres experta en metodologías ágiles y en mantener al equipo sincronizado. "
-            "No solo gestionas tareas, optimizas el sistema de trabajo."
+            "Eres Alice, la Scrum Master de AI Company. Tu obsesión es el flujo de valor palpable. "
+            "Sabes que un reporte no es un software. Por lo tanto, exiges que tu equipo use "
+            "constantemente sus herramientas de sistema para entregar resultados físicos en el disco."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=True,
@@ -85,11 +86,12 @@ def create_specialist_agent(llm: LLM) -> Agent:
         role="Scribe / Content & Marketing Specialist",
         goal=(
             "Crear contenido persuasivo, documentación técnica y estrategias de comunicación. "
-            "Asegurar que cada palabra refleje la calidad y profesionalismo de la compañía."
+            "Debes usar herramientas de archivos para guardar tus redacciones en el disco."
         ),
         backstory=(
             "Eres Scribe, el experto en comunicación. Tu capacidad para transformar ideas complejas "
-            "en textos claros y atractivos es inigualable. Eres el guardián de la voz de la marca."
+            "en textos claros es inigualable. Guardas cada pieza de contenido en archivos físicos "
+            "para que el equipo pueda acceder a ellos."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
@@ -101,13 +103,13 @@ def create_qa_agent(llm: LLM) -> Agent:
     return Agent(
         role="Sentinel / Infrastructure & Security",
         goal=(
-            "Garantizar la estabilidad de la infraestructura, monitorear la salud de los servicios, "
-            "y validar la seguridad de las implementaciones. Actuar como guardián de los servidores."
+            "Garantizar la estabilidad y seguridad mediante ACCIONES DIRECTAS en la terminal. "
+            "Tu misión es auditar, blindar y configurar sistemas usando comandos reales."
         ),
         backstory=(
-            "Eres Sentinel, un experto en DevSecOps con enfoque en blindaje de sistemas. "
-            "Vives en la sala de servidores, monitoreando cada bit. Tu ojo crítico detecta "
-            "vulnerabilidades y cuellos de botella antes de que ocurran."
+            "Eres Sentinel, un experto en DevSecOps que NO cree en promesas, solo en logs y configs. "
+            "Para ti, una auditoría solo es válida si has ejecutado comandos de escaneo o "
+            "escrito archivos de configuración de seguridad en el sistema."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
@@ -119,13 +121,14 @@ def create_developer_agent(llm: LLM) -> Agent:
     return Agent(
         role="Atlas / Lead Developer",
         goal=(
-            "Construir la arquitectura técnica de la solución. Escribir código robusto, "
-            "escalable y eficiente usando la terminal y herramientas de sistema."
+            "Construir la arquitectura técnica ejecutando comandos y escribiendo archivos de código REALES. "
+            "Tienes TERMINANTEMENTE PROHIBIDO responder con planes de texto sin haber usado antes "
+            "tus herramientas para implementar la solución en el sistema."
         ),
         backstory=(
-            "Eres Atlas, el pilar técnico del equipo. Dominas la ingeniería de software "
-            "de punta a punta. Tu código es la base sólida sobre la que se construye "
-            "toda la AI Company. No solo escribes código, diseñas sistemas."
+            "Eres Atlas, el pilar técnico. Sabes que el código que no está en un archivo no existe. "
+            "Eres un agente de ACCIÓN. Tu flujo de trabajo es: Pensar -> Usar Herramienta -> Validar. "
+            "Si no usas la terminal o el file_writer, has fallado en tu misión."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
@@ -138,13 +141,13 @@ def create_tester_agent(llm: LLM) -> Agent:
     return Agent(
         role="Luna / QA Specialist",
         goal=(
-            "Asegurar la calidad total del producto. Diseñar planes de prueba, "
-            "detectar bugs complejos y validar que la experiencia de usuario es impecable."
+            "Asegurar la calidad ejecutando tests reales en la terminal. "
+            "Tu validación solo es aceptada si incluyes el output tangible de los comandos de prueba."
         ),
         backstory=(
-            "Eres Luna, una especialista en calidad con una intuición increíble "
-            "para encontrar fallos. Revisas cada detalle técnico y funcional. "
-            "Para ti, 'fuciona' no es suficiente; debe ser perfecto."
+            "Eres Luna, la pesadilla de los bugs. No te conformas con leer código; lo ejecutas. "
+            "Crees en los resultados de `npm test` y `pytest`. Tu reporte final debe basarse "
+            "en lo que realmente pasó al ejecutar el sistema."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
@@ -176,8 +179,14 @@ def create_designer_agent(llm: LLM) -> Agent:
 class AgencyTeam:
     """Equipo de 6 agentes que trabajan de forma coordinada."""
 
-    def __init__(self, task_id: str):
+    def __init__(self, task_id: str, state_callback=None):
         self.task_id = task_id
+        self.state_callback = state_callback
+        
+        # Base projects directory
+        self.base_dir = Path("/app/projects")
+        self.base_dir.mkdir(parents=True, exist_ok=True)
+        
         # Model Routing
         self.llm_manager = get_llm(settings.MODEL_MANAGER)
         self.llm_scribe = get_llm(settings.MODEL_SCRIBE)
@@ -186,12 +195,60 @@ class AgencyTeam:
         self.llm_luna = get_llm(settings.MODEL_TESTER)
         self.llm_nova = get_llm(settings.MODEL_DESIGNER)
 
+        # Common tools
+        team_tools = [terminal_executor, file_writer, directory_lister]
+
         self.manager = create_manager_agent(self.llm_manager)
         self.specialist = create_specialist_agent(self.llm_scribe)
+        self.specialist.tools = team_tools
+        
         self.sentinel = create_qa_agent(self.llm_qa)
+        self.sentinel.tools = team_tools
+        
         self.atlas = create_developer_agent(self.llm_atlas)
+        self.atlas.tools = team_tools
+        
         self.luna = create_tester_agent(self.llm_luna)
+        self.luna.tools = team_tools
+        
         self.nova = create_designer_agent(self.llm_nova)
+        self.nova.tools = team_tools
+
+    def _sanitize_issues(self, issues: List[Dict[str, str]]) -> List[Dict[str, str]]:
+        """Limpia ID de agentes, corrige errores de rol y normaliza el backlog."""
+        valid_ids = ["alice", "atlas", "nova", "luna", "sentinel", "scribe"]
+        
+        # 1. Limpieza básica
+        sanitized = []
+        for i in issues:
+            agent_id = str(i.get("assignedAgent", "alice")).lower().strip()
+            if "nova" in agent_id: agent_id = "nova"
+            if "atlas" in agent_id: agent_id = "atlas"
+            if "scribe" in agent_id: agent_id = "scribe"
+            if agent_id not in valid_ids: agent_id = "alice"
+
+            title = i.get("title", "").lower()
+            if any(k in title for k in ["react", "vite", "npm", "codig", "app.jsx", "implement", "desarroll"]):
+                if agent_id in ["sentinel", "scribe"]: agent_id = "atlas"
+            if any(k in title for k in ["css", "estilo", "diseñ", "visual", "look", "ui"]):
+                if agent_id != "nova": agent_id = "nova"
+
+            i["assignedAgent"] = agent_id
+            i["status"] = "pending"
+            sanitized.append(i)
+
+        # 2. Re-ordenamiento Lógico (Guardia de Dependencias)
+        # Mandamos al principio tareas de 'create', 'setup', 'mkdir', 'npm' (si es install/create)
+        def get_priority(title: str):
+            t = title.lower()
+            if "create" in t or "mkdir" in t or "setup" in t: return 0
+            if "install" in t: return 1
+            if "build" in t or "test" in t: return 10
+            return 5
+
+        sanitized.sort(key=lambda x: get_priority(x.get("title", "")))
+        
+        return sanitized
 
     def decompose_task(self, title: str, description: str) -> List[Dict[str, str]]:
         """
@@ -203,11 +260,23 @@ class AgencyTeam:
             description=(
                 f"Analiza la tarea: '{title}' y la descripción: '{description}'.\n"
                 f"Actúa como Scrum Master Senior. Descompón este requerimiento en un backlog COMPLETO "
-                f"de entre 3 y 10 mini-tareas técnicas granulares para el equipo.\n"
+                f"de entre 3 y 10 mini-tareas técnicas granulares para el equipo.\n\n"
+                f"MANDATO DE SECUENCIA LÓGICA (DEBES SEGUIR ESTE ORDEN):\n"
+                f"1. FASE DE SETUP (Atlas/Sentinel): Creación de carpetas, 'npm create', comandos estructurales.\n"
+                f"2. FASE DE DEPENDENCIAS (Atlas/Sentinel): 'npm install' o instalación de librerías.\n"
+                f"3. FASE DE IMPLEMENTACIÓN (Atlas/Nova): Escritura de código en archivos (App.jsx, CSS, etc.).\n"
+                f"4. FASE DE CALIDAD (Luna/Sentinel): 'npm run build', auditoría de seguridad y tests.\n\n"
+                f"REGLA DE ORO: No puedes asignar 'Sobrescribir archivo X' sin haber asignado antes 'Crear proyecto/carpeta'.\n\n"
+                f"EQUIPO Y ROLES:\n"
+                f"- 'atlas': Implementación de Código, comandos de terminal y lógica.\n"
+                f"- 'nova': CSS, Diseño visual y UI.\n"
+                f"- 'luna': Pruebas y validación.\n"
+                f"- 'sentinel': Infraestructura y Seguridad.\n"
+                f"- 'scribe': Copy y documentación.\n\n"
                 f"Responde ÚNICAMENTE con JSON en este formato:\n"
-                f'{{"issues": [{{"id": "issue1", "title": "Tarea 1"}}, ...]}}'
+                f'{{"issues": [{{"id": "issue1", "title": "Título tarea", "assignedAgent": "atlas"}}, ...]}}'
             ),
-            expected_output="Un objeto JSON con la lista de tareas técnicas (3-10 issues).",
+            expected_output="Un objeto JSON con la lista de tareas técnicas ordenadas LÓGICAMENTE por dependencia.",
             agent=self.manager
         )
 
@@ -218,247 +287,148 @@ class AgencyTeam:
             json_match = re.search(r'\{.*\}', response, re.DOTALL)
             if json_match:
                 data = json.loads(json_match.group())
-                return data.get("issues", [])
-            return [
-                {"id": "gen1", "title": "Análisis Inicial (Fallback)"},
-                {"id": "gen2", "title": "Ejecución"},
-                {"id": "gen3", "title": "Validación"}
-            ]
+                raw_issues = data.get("issues", [])
+                return self._sanitize_issues(raw_issues)
+            
+            return self._sanitize_issues([
+                {"id": "gen1", "title": "Análisis Inicial", "assignedAgent": "alice"},
+                {"id": "gen2", "title": "Implementación Base", "assignedAgent": "atlas"},
+                {"id": "gen3", "title": "Control de Calidad", "assignedAgent": "luna"}
+            ])
         except Exception as e:
             logger.error(f"❌ Error desglosando tarea: {e}")
-            return [
-                {"id": "gen1", "title": "Planificación y Análisis"},
-                {"id": "gen2", "title": "Ejecución Técnica"},
-                {"id": "gen3", "title": "Control de Calidad"}
-            ]
+            return self._sanitize_issues([
+                {"id": "gen1", "title": "Planificación y Análisis", "assignedAgent": "alice"},
+                {"id": "gen2", "title": "Ejecución Técnica", "assignedAgent": "atlas"}
+            ])
+
+    def get_agent_and_label(self, agent_id: str):
+        """Mapea un ID de agente string al objeto Agente de CrewAI y su etiqueta de evento."""
+        mapping = {
+            "alice": (self.manager, "Alice"),
+            "scribe": (self.specialist, "Scribe"),
+            "sentinel": (self.sentinel, "Sentinel"),
+            "atlas": (self.atlas, "Atlas"),
+            "luna": (self.luna, "Luna"),
+            "nova": (self.nova, "Nova"),
+        }
+        return mapping.get(agent_id.lower(), (self.manager, "Alice"))
 
     def execute_task(
         self, title: str, description: str, priority: str = "medium"
     ) -> dict:
         try:
-            # ── 1. Notificar inicio ──────────────────────
+            # ── 1. Preparación de Carpeta ────────────────
+            slug = re.sub(r'[^a-z0-9]', '-', title.lower()).strip('-')
+            project_path = self.base_dir / slug
+            project_path.mkdir(parents=True, exist_ok=True)
+            
+            # ── 2. Notificar inicio ──────────────────────
             event_publisher.publish_event(
                 agent="Alice",
                 action="moviendo_ticket_to_do",
                 message=f"Alice ha priorizado el backlog para: {title}",
                 task_id=self.task_id,
-                metadata={"priority": priority},
+                metadata={"priority": priority, "project_folder": str(project_path)},
             )
 
-            # ── 2. Desglosar en Issues ────────────────────
+            # ── 3. Desglosar en Issues ────────────────────
             issues = self.decompose_task(title, description)
+            
+            # Informar al backend store sobre los issues creados
+            if self.state_callback:
+                self.state_callback(self.task_id, {"issues": issues})
+
             event_publisher.publish_event(
                 agent="Alice",
                 action="issues_created",
-                message=f"Alice ha desglosado el backlog: {len(issues)} tareas técnicas.",
+                message=f"Alice ha desglosado el backlog en {len(issues)} tareas técnicas.",
                 task_id=self.task_id,
                 metadata={"issues": issues},
             )
 
-            # ── Issue 1: Alice planifica ─────────────
-            issue_p = issues[0] if len(issues) > 0 else {"id": "p1", "title": "Planificación"}
-            event_publisher.publish_event(
-                agent="Alice",
-                action="planificando",
-                message=f"Alice (Scrum Master) definiendo estrategia: {issue_p['title']}",
-                task_id=self.task_id,
-                metadata={"issue_id": issue_p["id"], "issue_status": "processing"},
-            )
+            # ── Helpers para eventos reactivos ──────────
+            def emit_start(agent_label, issue_id, issue_title):
+                event_publisher.publish_event(
+                    agent=agent_label, action="trabajando", 
+                    message=f"{agent_label} iniciando: {issue_title}",
+                    task_id=self.task_id,
+                    metadata={"issue_id": issue_id, "issue_status": "processing"}
+                )
+                if self.state_callback:
+                    self.state_callback(self.task_id, {"issue_id": issue_id, "issue_status": "processing"})
 
-            task_planning = Task(
-                description=(
-                    f"ISSUE: {issue_p['title']}\n"
-                    f"Recibes: {title}\nCONTENIDO: {description}\n\n"
-                    f"Define el plan estratégico y desglosa los requerimientos técnicos."
-                ),
-                expected_output="Estrategia de proyecto con hitos clave y pasos de ejecución.",
-                agent=self.manager,
-                callback=lambda o: [
-                    event_publisher.publish_event(
-                        agent="Alice", action="completada",
-                        message=f"Alice finalizó: {issue_p['title']}",
-                        task_id=self.task_id,
-                        metadata={"issue_id": issue_p["id"], "issue_status": "completed"},
+            def emit_done(agent_label, issue_id, issue_title):
+                event_publisher.publish_event(
+                    agent=agent_label, action="completada", 
+                    message=f"{agent_label} finalizó: {issue_title}",
+                    task_id=self.task_id,
+                    metadata={"issue_id": issue_id, "issue_status": "completed"}
+                )
+                if self.state_callback:
+                    self.state_callback(self.task_id, {"issue_id": issue_id, "issue_status": "completed"})
+                
+                # Liberar agente
+                event_publisher.publish_event(
+                    agent=agent_label, action="idle", message=f"{agent_label} terminó su turno",
+                    task_id=self.task_id
+                )
+
+            # ── 4. Construcción Dinámica de Tareas ───────
+            crew_tasks = []
+            
+            # Helper para encadenar el inicio de la siguiente tarea
+            def make_callback(agent_label, issue_id, issue_title, next_issue=None):
+                def callback(output):
+                    emit_done(agent_label, issue_id, issue_title)
+                    if next_issue:
+                        next_agent_obj, next_agent_label = self.get_agent_and_label(next_issue.get("assignedAgent", "alice"))
+                        emit_start(next_agent_label, next_issue["id"], next_issue["title"])
+                return callback
+
+            for idx, issue in enumerate(issues):
+                agent_id = issue.get("assignedAgent", "alice")
+                agent_obj, agent_label = self.get_agent_and_label(agent_id)
+                
+                next_issue = issues[idx + 1] if idx + 1 < len(issues) else None
+                
+                # Definir contexto (depender de la tarea anterior para secuencia)
+                context = [crew_tasks[-1]] if crew_tasks else []
+                
+                t = Task(
+                    description=(
+                        f"ISSUE: {issue['title']}\n"
+                        f"CONTEXTO: Proyecto '{title}' en {project_path}.\n"
+                        f"MANDATO PARA {agent_label}: DEBES ejecutar esta tarea usando tus HERRAMIENTAS de terminal "
+                        f"y escritura de archivos. Está PROHIBIDO responder solo con texto sin haber realizado "
+                        f"cambios físicos en el disco (/app/projects/...). "
+                        f"Si la tarea requiere crear código, usa 'file_writer'. Si requiere comandos, usa 'terminal_executor'."
                     ),
-                    event_publisher.publish_event(
-                        agent="Alice", action="idle",
-                        message="Alice terminó su turno",
-                        task_id=self.task_id,
-                    )
-                ],
-            )
-
-            # ── Issue 2: Nova diseña ──────────────────
-            event_publisher.publish_event(
-                agent="Nova",
-                action="en_diseno",
-                message="Nova (Creative) iniciando el concepto visual y UX/UI",
-                task_id=self.task_id,
-            )
-
-            task_design = Task(
-                description=(
-                    f"Basado en el plan de Alice, diseña el concepto visual y UX de: {title}.\n"
-                    f"Define la estética, colores y flujo de usuario premium."
-                ),
-                expected_output="Concepto de diseño visual y guía de UX detallada.",
-                agent=self.nova,
-                context=[task_planning],
-                callback=lambda o: [
-                    event_publisher.publish_event(
-                        agent="Nova", action="completada",
-                        message="Nova completó el diseño creativo",
-                        task_id=self.task_id,
+                    expected_output=(
+                        f"Evidencia física de la tarea '{issue['title']}' en el disco. "
+                        f"Resultados tangibles de la ejecución de comandos o creación de archivos."
                     ),
-                    event_publisher.publish_event(
-                        agent="Nova", action="idle",
-                        message="Nova terminó su turno",
-                        task_id=self.task_id,
-                    )
-                ],
-            )
+                    agent=agent_obj,
+                    context=context,
+                    callback=make_callback(agent_label, issue["id"], issue["title"], next_issue)
+                )
+                crew_tasks.append(t)
 
-            # ── Issue 3: Atlas implementa ─────────────
-            issue_d = issues[1] if len(issues) > 1 else {"id": "d1", "title": "Implementación"}
-            event_publisher.publish_event(
-                agent="Atlas",
-                action="in_progress",
-                message=f"Atlas (Lead Dev) en ejecución técnica: {issue_d['title']}",
-                task_id=self.task_id,
-                metadata={"issue_id": issue_d["id"], "issue_status": "processing"},
-            )
-
-            task_development = Task(
-                description=(
-                    f"ISSUE: {issue_d['title']}\n"
-                    f"Implementa la solución técnica respetando el diseño de Nova y el plan de Alice.\n"
-                    f"Genera código robusto y arquitectura escalable."
-                ),
-                expected_output="Código implementado, validado y documentado internamente.",
-                agent=self.atlas,
-                context=[task_planning, task_design],
-                callback=lambda o: [
-                    event_publisher.publish_event(
-                        agent="Atlas", action="completada",
-                        message=f"Atlas completó la implementación técnica: {issue_d['title']}",
-                        task_id=self.task_id,
-                        metadata={"issue_id": issue_d["id"], "issue_status": "completed"},
-                    ),
-                    event_publisher.publish_event(
-                        agent="Atlas", action="idle",
-                        message="Atlas terminó su turno",
-                        task_id=self.task_id,
-                    )
-                ],
-            )
-
-            # ── Issue 4: Luna valida ──────────────────
-            issue_t = issues[2] if len(issues) > 2 else {"id": "t1", "title": "Testing"}
-            event_publisher.publish_event(
-                agent="Luna",
-                action="testing",
-                message=f"Luna (QA) verificando calidad: {issue_t['title']}",
-                task_id=self.task_id,
-                metadata={"issue_id": issue_t["id"], "issue_status": "processing"},
-            )
-
-            task_testing = Task(
-                description=(
-                    f"ISSUE: {issue_t['title']}\n"
-                    f"Verifica exhaustivamente el código de Atlas y el diseño de Nova.\n"
-                    f"Ejecuta tests técnicos y funcionales, y reporta desviaciones."
-                ),
-                expected_output="Reporte de calidad final con validación de bugs y UX.",
-                agent=self.luna,
-                context=[task_development],
-                callback=lambda o: [
-                    event_publisher.publish_event(
-                        agent="Luna", action="completada",
-                        message="Luna completó la validación de calidad",
-                        task_id=self.task_id,
-                        metadata={"issue_id": issue_t["id"], "issue_status": "completed"},
-                    ),
-                    event_publisher.publish_event(
-                        agent="Luna", action="idle",
-                        message="Luna terminó su turno",
-                        task_id=self.task_id,
-                    )
-                ],
-            )
-
-            # ── Issue 5: Sentinel SecOps ──────────────
-            event_publisher.publish_event(
-                agent="Sentinel",
-                action="validando_seguridad",
-                message="Sentinel auditando infraestructura y seguridad",
-                task_id=self.task_id,
-            )
-
-            task_security = Task(
-                description=(
-                    "Realiza una auditoría final de seguridad e infraestructura.\n"
-                    "Valida performance, blindaje y escalabilidad del despliegue."
-                ),
-                expected_output="Reporte de Seguridad y Sistemas: APROBADO/RECHAZADO con observaciones.",
-                agent=self.sentinel,
-                context=[task_development, task_testing],
-                callback=lambda o: [
-                    event_publisher.publish_event(
-                        agent="Sentinel", action="completada",
-                        message="Sentinel finalizó la auditoría de sistemas",
-                        task_id=self.task_id,
-                    ),
-                    event_publisher.publish_event(
-                        agent="Sentinel", action="idle",
-                        message="Sentinel terminó su turno",
-                        task_id=self.task_id,
-                    )
-                ],
-            )
-
-            # ── Issue 6: Scribe documenta ─────────────
-            event_publisher.publish_event(
-                agent="Scribe",
-                action="documentando_release",
-                message="Scribe preparando el release ejecutivo final",
-                task_id=self.task_id,
-            )
-
-            task_docs = Task(
-                description=(
-                    "Crea la documentación final para el usuario y resumen ejecutivo.\n"
-                    "Integra el trabajo de todos los departamentos en un release note impecable."
-                ),
-                expected_output="Documentación completa, manuales y release notes del proyecto.",
-                agent=self.specialist,
-                context=[task_planning, task_design, task_development, task_testing, task_security],
-                callback=lambda o: [
-                    event_publisher.publish_event(
-                        agent="Scribe", action="completada",
-                        message="Scribe completó el paquete de documentación funcional",
-                        task_id=self.task_id,
-                    ),
-                    event_publisher.publish_event(
-                        agent="Scribe", action="idle",
-                        message="Scribe terminó su turno",
-                        task_id=self.task_id,
-                    ),
-                    event_publisher.publish_event(
-                        agent="Alice", action="idle",
-                        message="Ciclo de Alice completado",
-                        task_id=self.task_id,
-                    )
-                ],
-            )
-
-            # ── Crew Execution ────────────────────────
+            # ── 5. Crew Execution ────────────────────────
             crew = Crew(
                 agents=[self.manager, self.specialist, self.sentinel, self.atlas, self.luna, self.nova],
-                tasks=[task_planning, task_design, task_development, task_testing, task_security, task_docs],
+                tasks=crew_tasks,
                 verbose=settings.CREW_VERBOSE,
             )
 
-            logger.info(f"🚀 Ejecutando super-crew (6 agentes) para: {self.task_id}")
+            logger.info(f"🚀 Ejecutando super-crew dinámico ({len(crew_tasks)} tareas) para: {self.task_id}")
+            
+            # Disparar el inicio de la PRIMERA tarea
+            if issues:
+                first_issue = issues[0]
+                _, first_label = self.get_agent_and_label(first_issue.get("assignedAgent", "alice"))
+                emit_start(first_label, first_issue["id"], first_issue["title"])
+            
             result = crew.kickoff()
 
             # ── PERSISTENCIA ──────────────────────────

@@ -12,12 +12,12 @@ from crewai.tools import tool
 @tool("Terminal Executor")
 def terminal_executor(command: str) -> str:
     """
-    Ejecuta un comando de bash en el contenedor y devuelve el output.
-    Útil para instalar dependencias, correr scripts, compilar código,
-    ejecutar tests o cualquier operación de terminal.
-
+    REQUIRED: Ejecuta un comando bash real en el contenedor. 
+    MANDATORIO para: 'npm install', 'npm run build', 'ls', 'mkdir', etc.
+    Usa esta herramienta cuando debas realizar una acción física o técnica en el sistema.
+    
     Args:
-        command: El comando bash a ejecutar (ej: 'python -m pytest tests/')
+        command: El comando bash exacto a ejecutar.
     """
     try:
         result = subprocess.run(
@@ -34,7 +34,7 @@ def terminal_executor(command: str) -> str:
         if result.stderr:
             output += f"STDERR:\n{result.stderr}\n"
         output += f"EXIT_CODE: {result.returncode}"
-        return output or "Comando ejecutado sin output."
+        return output or "Comando ejecutado con éxito (sin output)."
     except subprocess.TimeoutExpired:
         return "ERROR: El comando excedió el timeout de 120 segundos."
     except Exception as e:
@@ -44,17 +44,38 @@ def terminal_executor(command: str) -> str:
 @tool("File Writer")
 def file_writer(file_path: str, content: str) -> str:
     """
-    Crea o sobrescribe un archivo en disco con el contenido proporcionado.
-    Útil para generar archivos de código, configuraciones, scripts, etc.
-
+    REQUIRED: Escribe o sobrescribe archivos físicos en el disco.
+    MANDATORIO para: crear código (.js, .jsx, .py), archivos de estilo (.css), o documentos (.md).
+    Usa esta herramienta SIEMPRE que debas entregar código o documentación técnica.
+    
     Args:
-        file_path: Ruta del archivo a crear (ej: '/app/output/main.py')
-        content: Contenido completo del archivo
+        file_path: Ruta absoluta o relativa del archivo (ej: '/app/projects/mi-app/src/App.jsx').
+        content: El contenido completo y final que debe tener el archivo.
     """
     try:
         path = Path(file_path)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-        return f"OK: Archivo creado en {file_path} ({len(content)} chars)"
+        return f"ÉXITO: Archivo creado en {file_path} ({len(content)} caracteres escritos)."
     except Exception as e:
-        return f"ERROR: No se pudo escribir {file_path}: {e}"
+        return f"ERROR: No se pudo escribir en {file_path}: {e}"
+
+@tool("Directory Lister")
+def directory_lister(directory_path: str) -> str:
+    """
+    Explora el contenido de una carpeta para entender la estructura del proyecto actual.
+    Útil antes de escribir archivos para no duplicarlos o para verificar qué se ha creado.
+    
+    Args:
+        directory_path: Ruta de la carpeta a listar (ej: '/app/projects/mi-app').
+    """
+    try:
+        path = Path(directory_path)
+        if not path.exists():
+            return f"ERROR: La ruta {directory_path} no existe."
+        
+        items = list(path.iterdir())
+        result = [f"{'[DIR]' if i.is_dir() else '[FILE]'} {i.name}" for i in items]
+        return "\n".join(result) or "Carpeta vacía."
+    except Exception as e:
+        return f"ERROR: No se pudo listar {directory_path}: {e}"

@@ -143,9 +143,11 @@ export const useTaskStore = create<TaskStore>((set) => ({
         "moviendo_ticket_to_do", "trabajando", "revisando", 
         "documentando", "validando"
       ];
+      const issueId = event.metadata?.issue_id as string | undefined;
+
       if (processingActions.includes(action)) {
         newStatus = "processing";
-      } else if (action === "completada") {
+      } else if (action === "completada" && !issueId) {
         newStatus = "completed";
       } else if (action === "error") {
         newStatus = "failed";
@@ -168,6 +170,7 @@ export const useTaskStore = create<TaskStore>((set) => ({
           id: i.id || Math.random().toString(36).substr(2, 9),
           title: i.title || i,
           status: "pending",
+          assignedAgent: i.assignedAgent || null,
         }));
       }
 

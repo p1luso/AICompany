@@ -130,27 +130,44 @@ async def create_task(
     }
 
 
+def update_task_in_store(task_id: str, data: dict):
+    """Actualiza una tarea en el store y persiste a disco inmediatamente."""
+    if task_id in tasks_store:
+        # Si vienen issues de Alice, inicializarlos si no existen
+        if "issues" in data and not tasks_store[task_id].get("issues"):
+            tasks_store[task_id]["issues"] = data["issues"]
+        
+        # Si es una actualización de sub-issue
+        if "issue_id" in data:
+            issue_id = data["issue_id"]
+            issue_status = data.get("issue_status", "processing")
+            
+            issues = tasks_store[task_id].get("issues", [])
+            for i in issues:
+                if i["id"] == issue_id:
+                    i["status"] = issue_status
+                    break
+        else:
+            # Actualización normal del proyecto
+            tasks_store[task_id].update(data)
+            
+        save_tasks(tasks_store)
+        logger.info(f"💾 Store actualizado para: {task_id}")
+
 def execute_crew_task(
     task_id: str, title: str, description: str, priority: str
 ) -> None:
     """
     Ejecuta el crew de agentes en background
-
-    Args:
-        task_id: ID de la tarea
-        title: Título de la tarea
-        description: Descripción
-        priority: Prioridad
     """
     try:
         logger.info(f"⚙️ Iniciando ejecución del crew para tarea: {task_id}")
 
-        # Actualizar estado
-        tasks_store[task_id]["status"] = "processing"
-        save_tasks(tasks_store)
+        # Actualizar estado inicial
+        update_task_in_store(task_id, {"status": "processing"})
 
         # Crear equipo de agentes
-        agency_team = AgencyTeam(task_id=task_id)
+        agency_team = AgencyTeam(task_id=task_id, state_callback=update_task_in_store)
 
         # Ejecutar
         result = agency_team.execute_task(
@@ -159,9 +176,8 @@ def execute_crew_task(
             priority=priority,
         )
 
-        # Guardar resultado
-        tasks_store[task_id].update(result)
-        save_tasks(tasks_store)
+        # Cierre final
+        update_task_in_store(task_id, {"status": "completed", "result": str(result)})
 
         logger.info(f"✅ Tarea completada: {task_id}")
 
