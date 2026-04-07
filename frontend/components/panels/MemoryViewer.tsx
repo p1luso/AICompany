@@ -36,7 +36,9 @@ export function MemoryViewer() {
   });
   
   // Context Menu State
-  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, path: string } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, path: string, name: string, type: string } | null>(null);
+  const [deploying, setDeploying] = useState<Record<string, boolean>>({});
+  const [activeDeploys, setActiveDeploys] = useState<Record<string, any>>({});
 
   // Load tree when the modal is opened, and poll for updates every 3 seconds
   useEffect(() => {
@@ -85,10 +87,36 @@ export function MemoryViewer() {
   const toggleFolder = (path: string) => {
     setExpandedFolders(prev => ({ ...prev, [path]: !prev[path] }));
   };
+  
+  const handleDeploy = async (slug: string) => {
+    if (deploying[slug]) return;
+    
+    setDeploying(prev => ({ ...prev, [slug]: true }));
+    try {
+      const res = await fetch(`/api/projects/${slug}/deploy`, { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        setActiveDeploys(prev => ({ ...prev, [slug]: data }));
+        // Abrir en nueva pestaña
+        window.open(data.url, "_blank");
+      }
+    } catch (err) {
+      console.error("Deployment failed", err);
+    } finally {
+      setDeploying(prev => ({ ...prev, [slug]: false }));
+      setContextMenu(null);
+    }
+  };
 
-  const handleContextMenu = (e: React.MouseEvent, path: string) => {
+  const handleContextMenu = (e: React.MouseEvent, item: MemoryEntry) => {
     e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, path });
+    setContextMenu({ 
+      x: e.clientX, 
+      y: e.clientY, 
+      path: item.path, 
+      name: item.name,
+      type: item.type 
+    });
   };
 
   const handleDownloadFolder = (path: string) => {
@@ -129,14 +157,17 @@ export function MemoryViewer() {
           <div key={item.path}>
             <div
               onClick={() => toggleFolder(item.path)}
-              onContextMenu={(e) => handleContextMenu(e, item.path)}
+              onContextMenu={(e) => handleContextMenu(e, item)}
               className="flex items-center gap-1 p-1 hover:bg-black/5 cursor-pointer font-pixel text-[7px] group transition-colors"
-              style={{ paddingLeft: `${depth * 8 + 4}px` }}
+              style={{ paddingLeft: `${depth * 8 + 4}px`, color: "#000" }}
             >
               <Icon size={10} className={iconColor} />
-              <span className={`truncate flex-1 ${['projects', 'reports'].includes(item.name) ? 'font-bold underline decoration-dotted' : ''}`}>
+              <span className={`truncate flex-1 ${['projects', 'reports'].includes(item.name) ? 'font-bold underline decoration-dotted' : ''}`} style={{ color: "#000" }}>
                 {item.name.toUpperCase()}
               </span>
+              {activeDeploys[item.name] && (
+                <span className="bg-green-100 text-green-700 px-1 rounded-[1px] text-[5px] border border-green-300 animate-pulse">LIVE</span>
+              )}
               <MoreVertical size={8} className="opacity-0 group-hover:opacity-40" />
             </div>
             {isExpanded && item.children && renderTree(item.children, depth + 1)}
@@ -323,6 +354,18 @@ export function MemoryViewer() {
                 <Download size={10} />
                 DOWNLOAD_PROJECT (.ZIP)
               </button>
+
+              {contextMenu.path.includes('projects/') && contextMenu.type === 'directory' && contextMenu.name !== 'projects' && (
+                <button 
+                  onClick={() => handleDeploy(contextMenu.name)}
+                  disabled={deploying[contextMenu.name]}
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-[#000080] hover:text-white font-pixel text-[8px] w-full text-left border-t border-gray-300 transition-colors disabled:opacity-50"
+                  style={{ borderLeft: "none", borderRight: "none", borderBottom: "none", background: "none", cursor: deploying[contextMenu.name] ? "not-allowed" : "pointer" }}
+                >
+                  <Box size={10} className={deploying[contextMenu.name] ? "animate-spin" : ""} />
+                  {deploying[contextMenu.name] ? "DEPLOYING..." : activeDeploys[contextMenu.name] ? "RE-DEPLOY" : "🚀 DEPLOY LIVE"}
+                </button>
+              )}
             </div>
           )}
         </div>

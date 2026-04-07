@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 export type AgentState = "idle" | "active" | "walking";
 
 export interface AgentStatus {
-  id: "alice" | "archie" | "atlas" | "luna" | "nova";
+  id: "alice" | "archie" | "atlas" | "luna" | "nova" | "sage";
   state: AgentState;
   lastModified: number | null;
   lastFile: string | null;
@@ -21,6 +21,7 @@ const DEFAULT_AGENTS: AgentStatus[] = [
   { id: "atlas",    state: "idle", lastModified: null, lastFile: null, justChanged: false },
   { id: "luna",     state: "idle", lastModified: null, lastFile: null, justChanged: false },
   { id: "nova",     state: "idle", lastModified: null, lastFile: null, justChanged: false },
+  { id: "sage",     state: "idle", lastModified: null, lastFile: null, justChanged: false },
 ];
 
 export function useAgentTracker() {

@@ -4,12 +4,14 @@ Punto de entrada principal
 """
 import logging
 import uuid
-from contextlib import asynccontextmanager
+import uvicorn
+import subprocess
+import socket
 from typing import Optional
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
 from config import settings
 from models import TaskRequest, TaskResponse, HealthResponse, AgentEvent
@@ -24,8 +26,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Almacenamiento temporal de tareas (en producción usar BD)
+# Almacenamiento temporal de tareas y deploys
 tasks_store: dict = {}
+active_deployments: dict = {} # slug -> {port, url, pid, type}
 
 
 @asynccontextmanager
@@ -153,6 +156,21 @@ def update_task_in_store(task_id: str, data: dict):
             
         save_tasks(tasks_store)
         logger.info(f"💾 Store actualizado para: {task_id}")
+        
+        # 🔄 SINCRONIZAR CON REDIS (para que el Gateway lo vea "al tok")
+        sync_task_to_redis(task_id, tasks_store[task_id])
+
+def sync_task_to_redis(task_id: str, task_data: dict):
+    """Sincroniza el estado completo de una tarea con Redis para el Gateway."""
+    try:
+        if event_publisher.connected:
+            import json
+            key = f"task:{task_id}"
+            # TTL de 24 horas como en el Gateway
+            event_publisher.redis_client.set(key, json.dumps(task_data), ex=86400)
+            logger.debug(f"📡 Redis Sync: {task_id}")
+    except Exception as e:
+        logger.warning(f"⚠️ Error sincronizando con Redis: {e}")
 
 def execute_crew_task(
     task_id: str, title: str, description: str, priority: str
@@ -300,6 +318,75 @@ async def download_project(slug: str):
     except Exception as e:
         logger.error(f"❌ Error al crear zip: {e}")
         raise HTTPException(status_code=500, detail=f"Error al empaquetar: {str(e)}")
+
+
+def get_free_port(start_port: int = 9000, end_port: int = 9999) -> int:
+    """Busca un puerto libre en el rango dado."""
+    for port in range(start_port, end_port + 1):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(('localhost', port)) != 0:
+                return port
+    raise Exception("No free ports available in range 9000-9999")
+
+@app.post("/api/projects/{slug}/deploy")
+async def deploy_project(slug: str):
+    """
+    Levanta un servidor temporal para el proyecto.
+    Detecta si es React (Vite) o estático (HTML).
+    """
+    project_path = Path(settings.PROJECT_ROOT) / slug
+    if not project_path.exists():
+        raise HTTPException(status_code=404, detail="Proyecto no encontrado")
+
+    # Si ya está deployado, devolver el link existente
+    if slug in active_deployments:
+        return active_deployments[slug]
+
+    port = get_free_port()
+    
+    # Detectar tipo de proyecto
+    is_react = (project_path / "src" / "App.jsx").exists() or (project_path / "vite.config.js").exists()
+    
+    try:
+        if is_react:
+            # Para React: necesitamos npm install (si no está) y npm run dev
+            logger.info(f"🚀 Deploying REACT project: {slug} on port {port}")
+            # Usar vite con puerto específico
+            cmd = f"npm install && npx vite --port {port} --host 0.0.0.0"
+        else:
+            # Para Static: usar http-server o similar
+            logger.info(f"🚀 Deploying STATIC project: {slug} on port {port}")
+            cmd = f"npx http-server . -p {port} -a 0.0.0.0"
+
+        # Ejecutar en background
+        process = subprocess.Popen(
+            cmd,
+            shell=True,
+            cwd=project_path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+        
+        # Guardar en store
+        deployment_info = {
+            "slug": slug,
+            "port": port,
+            "url": f"http://localhost:{port}",
+            "pid": process.pid,
+            "type": "react" if is_react else "static"
+        }
+        active_deployments[slug] = deployment_info
+        
+        return deployment_info
+        
+    except Exception as e:
+        logger.error(f"❌ Error al deployar {slug}: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al deployar: {str(e)}")
+
+@app.get("/api/projects/deployments")
+async def list_deployments():
+    """Lista todos los despliegues activos."""
+    return active_deployments
 
 
 if __name__ == "__main__":

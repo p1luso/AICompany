@@ -22,6 +22,12 @@ export const AGENT_CONFIGS: Record<string, AgentConfig> = {
     bgColor: "#ff980010",
     avatar: "🔧",
   },
+  Sentinel: {
+    name: "Sentinel",
+    color: "#ff5252",
+    bgColor: "#ff525210",
+    avatar: "🛡️",
+  },
   Luna: {
     name: "Luna",
     color: "#ab47bc",
@@ -33,6 +39,12 @@ export const AGENT_CONFIGS: Record<string, AgentConfig> = {
     color: "#ec4899",
     bgColor: "#ec489910",
     avatar: "✨",
+  },
+  Sage: {
+    name: "Sage (Researcher)",
+    color: "#80d8ff",
+    bgColor: "#80d8ff10",
+    avatar: "🔎",
   },
   Gateway: {
     name: "Gateway",

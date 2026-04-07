@@ -120,7 +120,7 @@ var (
 
 func initAgentStates() {
 	agentStates = make(map[string]*AgentState)
-	ids := []string{"alice", "archie", "atlas", "nova", "luna"}
+	ids := []string{"alice", "sage", "archie", "atlas", "nova", "luna"}
 	for _, id := range ids {
 		agentStates[id] = &AgentState{
 			ID:    id,

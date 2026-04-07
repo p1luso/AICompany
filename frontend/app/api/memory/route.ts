@@ -26,6 +26,8 @@ function scanDirectory(dirPath: string, relativePath: string = ""): MemoryEntry[
     const isDirectory = e.isDirectory();
 
     if (isDirectory) {
+      if (e.name === "node_modules" || e.name === ".git" || e.name === ".next" || e.name === "dist") continue;
+      
       results.push({
         name: e.name,
         type: "directory",

@@ -20,6 +20,8 @@ const INITIAL_AGENTS: Record<string, Agent> = {
   atlas:    { id: "atlas",    status: "IDLE", lastSeen: Date.now() },
   luna:     { id: "luna",     status: "IDLE", lastSeen: Date.now() },
   nova:     { id: "nova",     status: "IDLE", lastSeen: Date.now() },
+  sentinel: { id: "sentinel", status: "IDLE", lastSeen: Date.now() },
+  sage:     { id: "sage",     status: "IDLE", lastSeen: Date.now() },
 };
 
 export const useAgentStore = create<AgentStore>((set) => ({

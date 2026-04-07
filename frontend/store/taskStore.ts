@@ -60,7 +60,7 @@ export const useTaskStore = create<TaskStore>((set) => ({
       const updatedTask = state.currentTask
         ? {
             ...state.currentTask,
-            events: [...state.currentTask.events, event],
+            events: [...(state.currentTask.events || []), event],
           }
         : null;
 
@@ -163,7 +163,7 @@ export const useTaskStore = create<TaskStore>((set) => ({
         ...task,
         status: newStatus,
         assignedAgent: normalizedAgent,
-        events: [...task.events, event],
+        events: [...(task.events || []), event],
       };
 
       // Manejar creación de Issues
@@ -219,10 +219,22 @@ export const useTaskStore = create<TaskStore>((set) => ({
       
       const taskMap: Record<string, StoredTask> = {};
       validTasks.forEach((t) => {
+        // Sanitizar claves (quitar espacios en blanco al inicio/final de las keys)
+        const sanitizedIssues = (t.issues || []).map(i => {
+          // Extraer assignedAgent incluso si tiene espacios (" assignedAgent")
+          const agent = i.assignedAgent || (i as any)[" assignedAgent"] || "atlas";
+          return {
+            ...i,
+            assignedAgent: agent,
+            title: typeof i.title === 'string' ? i.title : (typeof i === 'string' ? i : "Tarea sin nombre"),
+            status: i.status || "pending"
+          };
+        });
+
         taskMap[t.id] = {
           ...t,
-          events: t.events || [],
-          issues: t.issues || [],
+          events: Array.isArray(t.events) ? t.events : [],
+          issues: sanitizedIssues,
         };
       });
 
@@ -234,7 +246,8 @@ export const useTaskStore = create<TaskStore>((set) => ({
 
       return { 
         tasks: taskMap,
-        currentTask
+        currentTask,
+        events: currentTask?.events || []
       };
     });
   },

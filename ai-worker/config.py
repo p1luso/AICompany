@@ -40,6 +40,7 @@ class Settings(BaseSettings):
     MODEL_MANAGER: str = "ollama/llama3.2:latest"    # Scrum Master (Local)
     MODEL_DEV: str = "ollama/qwen2.5-coder:latest"   # Junior Dev (Local)
     MODEL_COPY: str = "ollama/mistral:latest"        # Copywriter (Local)
+    MODEL_RESEARCHER: str = "gemini/gemini-2.5-flash" # Specialist (Cloud - Deep Dive)
 
     # CrewAI
     CREW_VERBOSE: bool = True

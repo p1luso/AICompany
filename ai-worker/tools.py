@@ -6,6 +6,7 @@ import subprocess
 import requests
 import os
 import json
+import re
 from pathlib import Path
 
 from crewai.tools import tool
@@ -425,6 +426,18 @@ def _scaffold_landing(name: str, project_dir: Path) -> str:
 </html>
 """)
 
+    # Agregar package.json mínimo para que npm run build no falle en QA (aunque sea un no-op)
+    pkg = {
+        "name": name,
+        "version": "1.0.0",
+        "private": True,
+        "scripts": {
+            "build": "echo 'Landing estática: no requiere build.'",
+            "dev": "echo 'Abre index.html directamente.'"
+        }
+    }
+    (project_dir / "package.json").write_text(json.dumps(pkg, indent=2))
+
     (project_dir / "style.css").write_text("""* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -643,6 +656,87 @@ def image_generator_tool(prompt: str, file_path: str) -> str:
         return f"ÉXITO: Imagen generada y guardada en {file_path}."
     except Exception as e:
         return f"ERROR: No se pudo generar la imagen: {e}"
+
+
+
+@tool("Web Auditor")
+def web_auditor(project_path: str) -> str:
+    """
+    Realiza una auditoría visual y estructural del proyecto.
+    Úsala para verificar que la UI sea 'Premium' y que no falten metas o scripts.
+
+    Busca:
+    - Metas básicos (title, description).
+    - Scripts y links de CSS.
+    - Estéticos 'Premium': Gradients, HSL colors, Backdrop-filters, Flex/Grid.
+    - IDs críticos como #root o #app.
+
+    Args:
+        project_path: Ruta del proyecto (ej: '/memory/projects/mi-app').
+    """
+    try:
+        path = Path(project_path)
+        if not path.exists():
+            return f"ERROR: La ruta {project_path} no existe."
+
+        report = [f"--- REPORTE DE AUDITORÍA: {path.name} ---"]
+        
+        # 1. Buscar index.html (en raíz o dist)
+        html_files = list(path.glob("**/index.html"))
+        if not html_files:
+            return f"AVERTENCIA: No se encontró index.html en {project_path}. ¿Ejecutaste el build?"
+        
+        target_html = html_files[0]
+        content = target_html.read_text(encoding="utf-8")
+        
+        # 2. Auditoría Estructural
+        report.append("\n[ESTRUCTURA]")
+        has_title = "<title>" in content.lower()
+        has_meta = "<meta name=\"description\"" in content.lower()
+        has_root = "id=\"root\"" in content.lower() or "id=\"app\"" in content.lower()
+        
+        report.append(f"- Título: {'✅ OK' if has_title else '❌ FALTANTE'}")
+        report.append(f"- Meta Descripción: {'✅ OK' if has_meta else '⚠️ RECOMENDADO'}")
+        report.append(f"- Contenedor Root (#root/#app): {'✅ OK' if has_root else '❌ CRÍTICO'}")
+
+        # 3. Auditoría Visual (Premium CSS)
+        report.append("\n[ESTÉTICA PREMIUM]")
+        css_files = list(path.glob("**/*.css"))
+        premium_indicators = {
+            "Gradients": ["linear-gradient", "radial-gradient"],
+            "Modern Layout": ["display: flex", "display: grid"],
+            "Advanced FX": ["backdrop-filter", "box-shadow", "border-radius", "transition"],
+            "Colors": ["hsl(", "var(--", "rgba("],
+            "Typography": ["font-family:", "url(", "Google Fonts"]
+        }
+        
+        found_premium = []
+        full_css_content = ""
+        for cf in css_files:
+            full_css_content += cf.read_text(encoding="utf-8").lower()
+
+        for category, keywords in premium_indicators.items():
+            if any(kw.lower() in full_css_content for kw in keywords):
+                found_premium.append(category)
+
+        if len(found_premium) >= 4:
+            report.append("- Calidad Visual: ✨ PREMIUM (Nivel Alto)")
+        elif len(found_premium) >= 2:
+            report.append("- Calidad Visual: 📈 ESTÁNDAR (Mejorable)")
+        else:
+            report.append("- Calidad Visual: ⚠️ BÁSICO (Faltan gradientes, sombras o modern layout)")
+        
+        report.append(f"- Elementos detectados: {', '.join(found_premium) or 'Ninguno'}")
+
+        # 4. Verificación de Scripts/Assets
+        scripts = len(re.findall(r"<script", content.lower()))
+        links = len(re.findall(r"<link", content.lower()))
+        report.append(f"\n[CARGA]: {scripts} scripts, {links} recursos externos.")
+
+        return "\n".join(report)
+
+    except Exception as e:
+        return f"ERROR en Auditoría: {e}"
 
 
 @tool("Directory Lister")

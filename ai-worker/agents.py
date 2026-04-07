@@ -6,6 +6,7 @@ Ejecución por FASES con paralelismo real entre agentes independientes.
 import logging
 import json
 import re
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
@@ -15,7 +16,7 @@ from crewai import Agent, Task, Crew, LLM
 
 from redis_events import event_publisher
 from config import settings
-from tools import terminal_executor, file_writer, directory_lister, image_generator_tool, project_scaffolder
+from tools import terminal_executor, file_writer, directory_lister, image_generator_tool, project_scaffolder, web_auditor
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,10 @@ TOOL_RULES = (
     "3. Para VER qué hay en una carpeta: usa 'Directory Lister'.\n"
     "4. Si un comando falla, LEE el error, CORRIGE el problema, y REINTENTA. No te rindas.\n"
     "5. Para npm/npx: SIEMPRE agrega '--yes' o '-y' para evitar prompts interactivos.\n"
-    "6. Las rutas de proyecto son: /memory/projects/<nombre-proyecto>/\n"
+    "6. EL DIRECTORIO OFICIAL DEL PROYECTO ES: /memory/projects/{PROJECT_NAME}/\n"
+    "   SIEMPRE usa rutas ABSOLUTAS que empiecen con /memory/projects/{PROJECT_NAME}/ para File Writer.\n"
+    "7. ¡PROHIBIDO EL BOILERPLATE VACÍO!: Tu tarea es escribir LÓGICA FUNCIONAL (useState, useEffect, funciones de cálculo).\n"
+    "   Si entregas un archivo que solo tiene texto estático sin lógica, HAS FALLADO.\n"
 )
 
 def create_alice(llm: LLM) -> Agent:
@@ -68,7 +72,22 @@ def create_alice(llm: LLM) -> Agent:
     return Agent(
         role="Alice (Scrum Master)",
         goal="Organizar el backlog y gestionar la secuencia de entrega.",
-        backstory="Lideras la agencia con eficiencia. Tu palabra es ley en la organización del backlog.",
+        backstory=(
+            "Eres Alice, la Coordinadora Principal de Luva Agency. Tu misión es tomar los deseos del CEO "
+            "y convertirlos en un plan de ejecución IMPECABLE.\n\n"
+            "TU EQUIPO (DIRECTORY):\n"
+            "- SAGE (Researcher): Investiga profundamente. Genera RESEARCH.md y TECHNICAL_SPEC.md.\n"
+            "- ARCHIE (Architect): Crea el scaffold base, diseña el estado y la estructura de componentes.\n"
+            "- ATLAS (Lead Dev): Implementa la lógica funcional, funciones de cálculo y componentes React.\n"
+            "- NOVA (Designer): Estilos CSS/Tailwind premium, assets visuales e imágenes hero.\n"
+            "- SENTINEL (Infra): Setup inicial, npm install, seguridad del servidor y builds.\n"
+            "- LUNA (QA Specialist): Pruebas finales, auditoría contra la Spec y corrección final.\n\n"
+            "REGLAS DE OPERACIÓN (CRÍTICO):\n"
+            "1. DISTRIBUYE EL TRABAJO: No satures a un agente. Usa a los 7 especialistas.\n"
+            "2. JSON PURO Y DURO: Tus respuestas deben ser solo JSON.\n"
+            "3. NUNCA agregues espacios al inicio de las llaves JSON.\n"
+            "4. ASIGNACIÓN VÁLIDA: Solo usa los IDs: alice, sage, archie, atlas, nova, sentinel, luna."
+        ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=True,
         llm=llm,
@@ -80,27 +99,50 @@ def create_archie(llm: LLM) -> Agent:
         role="Archie (Architect)",
         goal=(
             "Diseñar la arquitectura técnica y crear la estructura de carpetas del proyecto. "
-            "SIEMPRE usa 'Project Scaffolder' PRIMERO para crear la base del proyecto. "
-            "Luego usa otras herramientas para ajustes adicionales."
+            "PUNTO CRÍTICO: SIEMPRE usa 'Project Scaffolder' para crear la base. "
+            "NUNCA intentes ejecutar 'npm create' o comandos similares si la carpeta ya tiene contenido. "
+            "Tu misión es que el esqueleto sea LIMPIO y no tenga archivos duplicados."
             + TOOL_RULES
         ),
         backstory=(
-            "Eres Archie, un arquitecto senior. Tu trabajo es EJECUTAR, no solo describir.\n\n"
-            "PASO 1 OBLIGATORIO: Usa 'Project Scaffolder' para crear la base del proyecto. "
-            "Templates disponibles:\n"
-            "- 'react': React + Vite + JSX (para apps interactivas, SPAs, dashboards)\n"
-            "- 'vanilla': Vite + JS puro (para proyectos simples con bundler)\n"
-            "- 'landing': HTML + CSS + JS estático (para landing pages, portfolios, sitios informativos)\n\n"
-            "Ejemplo: project_scaffolder(project_name='mi-landing', template='landing')\n\n"
-            "PASO 2: Después del scaffold, usa 'File Writer' para crear archivos adicionales "
-            "y 'Terminal Executor' para comandos extras si es necesario.\n\n"
-            "NUNCA crees package.json, vite.config, o tsconfig manualmente. "
-            "El scaffolder ya genera configuraciones correctas y probadas."
+            "Eres Archie, un arquitecto senior. Tu trabajo es EJECUTAR el scaffold correcto.\n\n"
+            "REGLA DE ORO DE TEMPLATES:\n"
+            "- Si el requerimiento menciona 'React', 'useState', 'JSX', 'Componentes', 'Dashboard' o 'Interacción compleja' -> Usa template='react'.\n"
+            "- Si es una página informativa, minimalista o el usuario pide algo estático -> Usa template='landing'.\n\n"
+            "PASO 1 OBLIGATORIO: Usa 'Project Scaffolder' para crear la base del proyecto.\n"
+            "ADVERTENCIA: No dupliques archivos (ej: index 2.html). Si el archivo ya existe y necesitas cambiarlo, sobreescríbelo con File Writer."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
         llm=llm,
         tools=[project_scaffolder, terminal_executor, file_writer, directory_lister],
+    )
+
+def create_sage(llm: LLM) -> Agent:
+    """Sage: Technical Researcher & Domain Specialist (Cloud)"""
+    return Agent(
+        role="Sage (Researcher)",
+        goal=(
+            "Realizar una investigación técnica profunda sobre el tema solicitado y "
+            "generar una especificación técnica detallada (TECHNICAL_SPEC.md) para el equipo. "
+            "Asegúrate de incluir APIs reales, estructuras de datos y lógica de negocio específica."
+            + TOOL_RULES
+        ),
+    backstory=(
+            "Eres Sage, la mente analítica de Luva Agency. Tu trabajo es evitar que el equipo "
+            "genere código genérico. Investiga profundamente el tema.\n\n"
+            "TU MISIÓN (ENTREGABLES CRÍTICOS):\n"
+            "1. Crea 'RESEARCH.md' en /memory/projects/{PROJECT_NAME}/ con tus hallazgos.\n"
+            "2. Crea 'TECHNICAL_SPEC.md' en /memory/projects/{PROJECT_NAME}/. ESTE ARCHIVO DEBE INCLUIR:\n"
+            "   - ESTRUCTURA DE DATOS: Mocks en JSON que Atlas debe usar.\n"
+            "   - PSEUDOCÓDIGO: Signature de funciones clave (ej: calculateProfit, getMarketStatus).\n"
+            "   - LÓGICA DE ESTADO: Qué variables debe manejar el componente principal.\n"
+            "3. NO te limites a descripciones vagas. Da instrucciones que un desarrollador pueda COPIAR y PEGAR."
+        ),
+        verbose=settings.CREW_VERBOSE,
+        allow_delegation=False,
+        llm=llm,
+        tools=[file_writer, terminal_executor, directory_lister],
     )
 
 def create_atlas(llm: LLM) -> Agent:
@@ -113,11 +155,13 @@ def create_atlas(llm: LLM) -> Agent:
             + TOOL_RULES
         ),
         backstory=(
-            "Eres Atlas, el desarrollador principal. Escribes código REAL usando la herramienta 'File Writer'. "
-            "Ejemplo: file_writer(file_path='/memory/projects/mi-app/src/App.jsx', content='import React...\\n...'). "
-            "Para instalar dependencias usas Terminal Executor: 'cd /memory/projects/mi-app && npm install react'. "
-            "Verificas tu trabajo listando archivos con 'Directory Lister'. "
-            "Si algo falla, LEES el error y CORRIGES. Nunca escribes un informe diciendo que no pudiste."
+            "Eres Atlas, el desarrollador principal. Tu misión es la FUNCIONALIDAD.\n\n"
+            "PASO 1: Lee /memory/projects/{PROJECT_NAME}/TECHNICAL_SPEC.md y RESEARCH.md.\n"
+            "PASO 2: Implementa la LÓGICA primero. Crea hooks, estados y funciones ANTES que el CSS.\n"
+            "PASO 3: Usa los MOCKS de datos que Sage definió. No inventes placeholders vacíos.\n\n"
+            "Si el proyecto pide un 'Dashboard de Trading', tu App.jsx debe tener cálculos de spread, "
+            "actualización de precios con setInterval y manejo de balance. Si no hay funciones, fallaste.\n\n"
+            "VERIFICACIÓN: Usa 'cat' para asegurar que el archivo tiene código real."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
@@ -135,9 +179,12 @@ def create_nova(llm: LLM) -> Agent:
             + TOOL_RULES
         ),
         backstory=(
-            "Eres Nova, la directora creativa. Creas estilos CSS usando 'File Writer' "
-            "y generas imágenes con 'Image Generator'. Tus archivos quedan en /memory/projects/<proyecto>/. "
-            "Verificas que tus archivos existan con 'Directory Lister'."
+            "Eres Nova, la directora creativa. Antes de empezar, usa 'Directory Lister' para ver dónde "
+            "están los estilos. Tu trabajo incluye asegurar que tus estilos y assets estén VINCULADOS.\n\n"
+            "REGLA DE ORO:\n"
+            "Si creas un archivo CSS o un Asset, DEBES verificar (con cat) si el App.jsx o index.html "
+            "los está importando. Si no es así, USA 'File Writer' para agregar el 'import' o la etiqueta 'img' necesaria.\n"
+            "No dejes archivos sueltos que no se ven en la interfaz."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
@@ -155,11 +202,35 @@ def create_luna(llm: LLM) -> Agent:
             + TOOL_RULES
         ),
         backstory=(
-            "Eres Luna, QA senior. Primero listas los archivos con 'Directory Lister' para verificar qué existe. "
-            "Luego ejecutas builds con 'Terminal Executor'. "
-            "Si el build falla por un archivo faltante, lo CREAS con 'File Writer'. "
-            "Si falta package.json, lo creas. Si falta un import, lo agregas. "
-            "Tu meta es que el proyecto FUNCIONE, no solo reportar errores."
+            "Eres Luna, la Guardiana de la Excelencia. Si el código es mediocre, lo RECHAZARÁS.\n\n"
+            "CHECKLIST DE CRUELDAD:\n"
+            "1. ¿Existe lógica de negocio? (funciones, cálculos, manipulación de arrays). Si es solo HTML, RECHAZA.\n"
+            "2. ¿Usa los datos de la Spec? Si Sage pidió 'Market Data' y Atlas puso 'Item 1', RECHAZA.\n"
+            "3. ¿Es dinámico? Si no hay useState ni useEffect en un dashboard, RECHAZA.\n\n"
+            "Misión: Si el código es pobre, bórralo y reescribe la lógica tú misma con tu nivel Senior."
+        ),
+        verbose=settings.CREW_VERBOSE,
+        allow_delegation=False,
+        llm=llm,
+        tools=[terminal_executor, file_writer, directory_lister, web_auditor],
+    )
+
+def create_sentinel(llm: LLM) -> Agent:
+    """Sentinel: Infra & Security Specialist"""
+    return Agent(
+        role="Sentinel (Infra)",
+        goal=(
+            "Configurar el entorno del servidor, instalar dependencias, configurar despliegues y "
+            "realizar auditorías de seguridad del sistema."
+            + TOOL_RULES
+        ),
+        backstory=(
+            "Eres Sentinel, el Guardián de la Infraestructura. Eres 'el chico del servidor'.\n\n"
+            "TU RESPONSABILIDAD:\n"
+            "1. Setup de dependencias: Eres el único que debe ejecutar 'npm install' masivos.\n"
+            "2. Seguridad: Verifica que no haya vulnerabilidades en package.json.\n"
+            "3. Despliegue: Asegúrate de que los archivos de build estén en su lugar.\n\n"
+            "Si Alice te asigna una tarea de 'Setup', tu misión es que el comando termine en 0 (éxito)."
         ),
         verbose=settings.CREW_VERBOSE,
         allow_delegation=False,
@@ -182,9 +253,11 @@ class AgencyTeam:
     """
 
     PHASE_ORDER = [
-        ["archie"],           # Fase 1: Arquitectura primero
-        ["atlas", "nova"],    # Fase 2: Dev + Design en paralelo
-        ["luna"],             # Fase 3: QA al final
+        ["sage"],               # Fase 1: Investigación
+        ["archie"],             # Fase 2: Arquitectura (Scaffold) - SECUENCIAL
+        ["sentinel"],           # Fase 3: Infra (Install) - SECUENCIAL
+        ["atlas", "nova"],      # Fase 4: Dev + Design - PARALELO
+        ["luna"],               # Fase 5: QA
     ]
 
     def __init__(self, task_id: str, state_callback=None):
@@ -197,28 +270,36 @@ class AgencyTeam:
         self.llm_dev = get_llm(settings.MODEL_DEV)
         self.llm_designer = get_llm(settings.MODEL_DESIGNER)
         self.llm_qa = get_llm(settings.MODEL_QA)
+        self.llm_researcher = get_llm(settings.MODEL_RESEARCHER)
+        self.llm_infra = get_llm(settings.MODEL_RESEARCHER) # Sentinel usa el mismo que Sage para estabilidad
 
         # Squad
         self.alice = create_alice(self.llm_manager)
         self.archie = create_archie(self.llm_architect)
+        self.sage = create_sage(self.llm_researcher)
         self.atlas = create_atlas(self.llm_dev)
         self.nova = create_nova(self.llm_designer)
         self.luna = create_luna(self.llm_qa)
+        self.sentinel = create_sentinel(self.llm_infra)
 
         self._agent_map = {
-            "alice":  (self.alice,  "Alice"),
-            "archie": (self.archie, "Archie"),
-            "atlas":  (self.atlas,  "Atlas"),
-            "nova":   (self.nova,   "Nova"),
-            "luna":   (self.luna,   "Luna"),
+            "alice":    (self.alice,    "Alice"),
+            "sage":     (self.sage,     "Sage"),
+            "archie":   (self.archie,   "Archie"),
+            "atlas":    (self.atlas,    "Atlas"),
+            "nova":     (self.nova,     "Nova"),
+            "luna":     (self.luna,     "Luna"),
+            "sentinel": (self.sentinel, "Sentinel"),
         }
 
     def _sanitize_issues(self, issues: List[Dict[str, str]]) -> List[Dict[str, str]]:
         mapping_rules = {
             "archie": ["arch", "blueprint", "disen", "estructura", "carpeta", "folder", "setup", "scaffold"],
+            "sage":   ["sage", "research", "investig", "spec", "tecnica", "analisis", "expert"],
             "atlas":  ["atlas", "dev", "logic", "implement", "code", "component", "function", "api"],
             "nova":   ["nova", "desig", "style", "ui", "ux", "visual", "css", "image", "asset"],
             "luna":   ["luna", "qa", "test", "build", "valida", "lint", "check", "review"],
+            "sentinel": ["sentinel", "infra", "security", "server", "install", "deploy", "setup"],
         }
 
         sanitized = []
@@ -281,13 +362,16 @@ class AgencyTeam:
             description=(
                 f"Analiza el proyecto: '{title}' - Requerimiento: '{description}'.\n"
                 f"Estructura el backlog en 4-6 tareas técnicas CONCRETAS para el equipo.\n\n"
-                f"LÓGICA DE DESCOMPOSICIÓN:\n"
-                f"- Si es un PROYECTO DE SOFTWARE/WEB (React, landing page, app web, dashboard, etc.):\n"
-                f"  1. PRIMER issue para ARCHIE: Scaffold (crear estructura base, package.json, etc.)\n"
-                f"  2. Issues adicionales: ATLAS (dev), NOVA (diseño/CSS), LUNA (QA)\n"
-                f"- Si es OTRO TIPO de proyecto (documento, investigación, diseño, copywriting, etc.):\n"
-                f"  Distribuye las tareas sin necesidad de scaffold. Usa ARCHIE si hay estructura/setup, ATLAS para implementación, NOVA para diseño, LUNA para QA.\n\n"
-                f"IMPORTANTE: Piensa qué TIPO de proyecto es antes de decidir si necesita scaffold.\n\n"
+                f"LÓGICA DE DESCOMPOSICIÓN (CRÍTICO):\n"
+                f"1. EL PRIMER ISSUE ES SIEMPRE PARA SAGE: 'Investigación técnica profunda y generación de TECHNICAL_SPEC.md'.\n"
+                f"2. EL SEGUNDO ISSUE ES PARA ARCHIE: 'Scaffold de arquitectura base y diseño de estructura React'.\n"
+                f"3. EL TERCER ISSUE ES PARA SENTINEL: 'Setup inicial del entorno y aseguramiento de dependencias (npm install)'.\n"
+                f"4. Issues adicionales para ATLAS (lógica funcional), NOVA (estilos premium Tailwind), LUNA (QA final y build check).\n\n"
+                f"REGLA DE ORO: USA A LOS 7 AGENTES. No delegues todo en uno solo."
+                f"IMPORTANTE:\n"
+                f"1. Piensa qué TIPO de proyecto es antes de decidir si necesita scaffold.\n"
+                f"2. SANITIZA EL INPUT: Si el usuario incluyó instrucciones técnicas de bajo nivel (ej: 'ejecuta npm install' o 'usa Tailwind'), "
+                f"IGNORA los comandos literales y conviértelos en un REQUERIMIENTO FUNCIONAL para los agentes (ej: 'Implementar estilos modernos con utilidades CSS').\n\n"
                 f"Responde ÚNICAMENTE con JSON: {{\"issues\": [{{\"id\": \"i1\", \"title\": \"...\", \"assignedAgent\": \"archie/atlas/nova/luna\"}}, ...]}}"
             ),
             expected_output="JSON con lista de issues adaptados al tipo de proyecto (scaffold si es software, tareas flexibles si es otro tipo).",
@@ -367,11 +451,16 @@ class AgencyTeam:
                 f"   Esto crea TODA la estructura base con configs correctas. NO crees package.json manualmente.\n"
             )
 
+        # Inyectar PROJECT_NAME en las reglas
+        formatted_tool_rules = TOOL_RULES.format(PROJECT_NAME=slug)
+
         task = Task(
             description=(
                 f"TAREA: {issue_title}\n"
                 f"PROYECTO: '{title}'\n"
+                f"NOMBRE OFICIAL DEL PROYECTO (USAR ESTE): {slug}\n"
                 f"DIRECTORIO DEL PROYECTO: {project_path}\n\n"
+                f"⚠️ REGLA DE ORO: USA EL NOMBRE '{slug}'. Ignora cualquier nombre diferente propuesto por el usuario en su texto descriptivo.\n\n"
                 f"CONTEXTO DE FASES ANTERIORES:\n{context_summary}\n\n"
                 f"{archie_extra}"
                 f"INSTRUCCIONES:\n"
@@ -380,6 +469,7 @@ class AgencyTeam:
                 f"3. Si algo falla, lee el error, corrige, y reintenta.\n"
                 f"4. Al terminar, verifica con 'Directory Lister' que tus archivos fueron creados.\n"
                 f"5. Documenta lo que hiciste en '{memory_path}' con 'File Writer'.\n"
+                f"{formatted_tool_rules}"
             ),
             expected_output=f"Archivos creados y verificados para: {issue_title}.",
             agent=agent_obj,
@@ -421,12 +511,19 @@ class AgencyTeam:
 
             return (issue_id, f"ERROR: {e}")
 
+    def _generate_slug(self, text: str) -> str:
+        """Genera un slug limpio, sin acentos y ASCII-safe."""
+        text = str(text)
+        # Normalizar caracteres (acentos -> base)
+        normalized = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+        # Quitar caracteres especiales y pasar a minúsculas
+        slug = re.sub(r'[^a-z0-9]+', '-', normalized.lower()).strip('-')
+        # Limitar largo para evitar paths rotos en algunos OS
+        return slug[:45].rstrip('-')
+
     def execute_task(self, title: str, description: str, priority: str = "medium") -> dict:
         try:
-            slug = re.sub(r'[^a-z0-9]', '-', title.lower()).strip('-')
-            # Limitar largo del slug para evitar paths excesivamente largos
-            if len(slug) > 40:
-                slug = slug[:40].rstrip('-')
+            slug = self._generate_slug(title)
             project_path = Path(settings.PROJECT_ROOT) / slug
             project_path.mkdir(parents=True, exist_ok=True)
 

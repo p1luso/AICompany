@@ -26,7 +26,7 @@ export function Sidebar() {
             />
           </div>
           <span className="font-pixel text-[10px] text-[#39ff14] whitespace-nowrap">
-            {activeCount}/6 ACTIVE
+            {activeCount}/7 ACTIVE
           </span>
         </div>
       </div>

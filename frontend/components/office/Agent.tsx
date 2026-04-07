@@ -124,14 +124,58 @@ function NovaSprite({ walking }: { walking: boolean }) {
   );
 }
 
+function SageSprite({ walking }: { walking: boolean }) {
+  return (
+    <svg viewBox="0 0 12 16" width={walking ? 60 : 54} height={walking ? 84 : 78} style={{ imageRendering: "pixelated" }}>
+      <rect x="2" y="0" width="8" height="3" fill="#B3E5FC" />
+      <rect x="0" y="1" width="12" height="1" fill="#B3E5FC" />
+      <rect x="1" y="2" width="10" height="2" fill="#B3E5FC" />
+      <rect x="2" y="4" width="8" height="5" fill="#FFE0B2" />
+      <rect x="2" y="5" width="3" height="1" fill="#0D47A1" />
+      <rect x="7" y="5" width="3" height="1" fill="#0D47A1" />
+      <rect x="2" y="9" width="8" height="5" fill="#4FC3F7" />
+      <rect x="1" y="10" width="10" height="1" fill="#FFF" opacity="0.5" />
+      <rect x="3" y="14" width="2" height="2" fill="#263238" />
+      <rect x="7" y="14" width="2" height="2" fill="#263238" />
+      {walking && <rect x="7" y="15" width="2" height="1" fill="#212121" transform="translate(0,-1)" />}
+    </svg>
+  );
+}
+
+function SentinelSprite({ walking }: { walking: boolean }) {
+  return (
+    <svg viewBox="0 0 12 16" width={walking ? 60 : 54} height={walking ? 84 : 78} style={{ imageRendering: "pixelated" }}>
+      {/* Helmet/Headset */}
+      <rect x="2" y="0" width="8" height="4" fill="#455A64" />
+      <rect x="1" y="1" width="10" height="2" fill="#455A64" />
+      <rect x="3" y="1" width="6" height="1" fill="#FF5252" /> {/* Red visor detail */}
+      {/* Face/Visor */}
+      <rect x="2" y="4" width="8" height="5" fill="#FFDCC4" />
+      <rect x="2" y="5" width="8" height="2" fill="#00E5FF" opacity="0.4" /> {/* AR Visor */}
+      {/* Body/Suit */}
+      <rect x="2" y="9" width="8" height="5" fill="#37474F" />
+      <rect x="0" y="10" width="2" height="4" fill="#37474F" />
+      <rect x="10" y="10" width="2" height="4" fill="#37474F" />
+      {/* Utility Belt */}
+      <rect x="2" y="12" width="8" height="1" fill="#FF5252" />
+      {/* Legs */}
+      <rect x="3" y="14" width="2" height="2" fill="#212121" />
+      <rect x="7" y="14" width="2" height="2" fill="#212121" />
+      {walking && <rect x="3" y="15" width="2" height="1" fill="#212121" transform="translate(0,-1)" />}
+    </svg>
+  );
+}
+
 /* ─── AGENT CONFIG ───────────────────────────────────────────── */
 
 const WORKING_BEHAVIORS: Record<string, { icons: string[] }> = {
-  alice:  { icons: ["📋", "📊", "💡", "🔍"] },
-  archie: { icons: ["📐", "🏗️", "📏", "💡"] },
-  atlas:  { icons: ["💻", "⚙️", "🔥", "🚀"] },
-  luna:   { icons: ["🧪", "🔎", "✅", "🐞"] },
-  nova:   { icons: ["🎨", "✨", "📐", "💅"] },
+  alice:    { icons: ["📋", "📊", "💡", "🔍"] },
+  archie:   { icons: ["📐", "🏗️", "📏", "💡"] },
+  atlas:    { icons: ["💻", "⚙️", "🔥", "🚀"] },
+  luna:     { icons: ["🧪", "🔎", "✅", "🐞"] },
+  nova:     { icons: ["🎨", "✨", "📐", "💅"] },
+  sage:     { icons: ["🔎", "📓", "🌐", "🧠"] },
+  sentinel: { icons: ["🛡️", "🔧", "💾", "🔌"] },
 };
 
 const IDLE_WANDER_ICONS: Record<string, string> = {
@@ -184,11 +228,25 @@ export const AGENT_CONFIG = {
     emoji:  "🎨",
     sprite: NovaSprite,
   },
+  sage: {
+    name:   "Sage",
+    label:  "Researcher",
+    color:  "#80d8ff",
+    emoji:  "🔎",
+    sprite: SageSprite,
+  },
+  sentinel: {
+    name:   "Sentinel",
+    label:  "Infra Spec",
+    color:  "#ff5252",
+    emoji:  "🛡️",
+    sprite: SentinelSprite,
+  },
 } as const;
 
 /* ─── AGENT COMPONENT ────────────────────────────────────────── */
 interface AgentProps {
-  id: "alice" | "archie" | "atlas" | "luna" | "nova";
+  id: "alice" | "archie" | "atlas" | "luna" | "nova" | "sage";
   state: AgentState;
 }
 

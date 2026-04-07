@@ -18,6 +18,7 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
   const atlas    = agents.find((a) => a.id === "atlas");
   const luna     = agents.find((a) => a.id === "luna");
   const nova     = agents.find((a) => a.id === "nova");
+  const sage     = agents.find((a) => a.id === "sage");
 
   const reportVisible = !!(alice?.lastModified || archie?.lastModified);
 
@@ -106,8 +107,12 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
               <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">DEV & QA</div>
             </div>
 
-            {/* CLUSTER 2 (Center - HQ: Alice + Archie) */}
-            <div className="absolute flex gap-4" style={{ left: "38%", bottom: "42%" }}>
+            {/* CLUSTER 2 (Center - HQ: Alice + Archie + Sage) */}
+            <div className="absolute flex gap-4" style={{ left: "28%", bottom: "42%" }}>
+              <div className="desk-slot group" onClick={() => onOpenDeskModal?.("sage")} title="Escritorio de Sage">
+                <Desk color="#4fc3f7" />
+                <div className="desk-label" style={{ color: "#80d8ff" }}>SAGE</div>
+              </div>
               <div className="desk-slot group" onClick={() => onOpenDeskModal?.("alice")} title="Escritorio de Alice">
                 <Desk color="#6D4C41" />
                 <div className="desk-label" style={{ color: "#4fc3f7" }}>ALICE</div>
@@ -116,7 +121,7 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
                 <Desk color="#6D4C41" />
                 <div className="desk-label" style={{ color: "#818cf8" }}>ARCHIE</div>
               </div>
-              <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">HQ & ARCHITECTURE</div>
+              <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">RESEARCH & HQ</div>
             </div>
 
             {/* CLUSTER 3 (Right - CREATIVE: Nova) */}
@@ -151,6 +156,7 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
             <Agent id="atlas"    state={atlas?.state ?? "idle"} />
             <Agent id="luna"     state={luna?.state ?? "idle"} />
             <Agent id="nova"     state={nova?.state ?? "idle"} />
+            <Agent id="sage"     state={sage?.state ?? "idle"} />
           </div>
 
           {/* PROJECT ROOM (Narrow right side) */}

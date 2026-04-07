@@ -19,6 +19,7 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     whiteboard: { x: 55, y: 82, label: "Whiteboard" },
     books:      { x: 6,  y: 85, label: "Library" },
     atlas_desk: { x: 15, y: 58, label: "Atlas Desk" },
+    sage_desk:  { x: 25, y: 58, label: "Sage Desk" },
     archie_desk:{ x: 55, y: 60, label: "Archie Desk" },
     luna_desk:  { x: 75, y: 58, label: "Luna Desk" },
     nova_desk:  { x: 85, y: 58, label: "Nova Desk" },
@@ -29,6 +30,7 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     coffee:     { x: 92, y: 15, label: "Coffee Machine" },
     whiteboard: { x: 55, y: 82, label: "Whiteboard" },
     books:      { x: 6,  y: 85, label: "Library" },
+    sage_desk:  { x: 25, y: 58, label: "Sage Desk" },
   },
   atlas: {
     desk:       { x: 15, y: 58, label: "Desk Atlas (Lead Dev)" },
@@ -38,6 +40,7 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     coffee:     { x: 92, y: 15, label: "Coffee Machine" },
     luna_desk:  { x: 75, y: 58, label: "Luna Desk" },
     archie_desk:{ x: 55, y: 60, label: "Archie Desk" },
+    sage_desk:  { x: 25, y: 58, label: "Sage Desk" },
   },
   luna: {
     desk:       { x: 75, y: 58, label: "Desk Luna (QA)" },
@@ -47,6 +50,7 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     water:      { x: 8,  y: 15, label: "Water Cooler" },
     atlas_desk: { x: 15, y: 58, label: "Atlas Desk" },
     archie_desk:{ x: 55, y: 60, label: "Archie Desk" },
+    sage_desk:  { x: 25, y: 58, label: "Sage Desk" },
   },
   nova: {
     desk:       { x: 85, y: 58, label: "Desk Nova (Creative)" },
@@ -55,6 +59,16 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     whiteboard: { x: 55, y: 82, label: "Whiteboard" },
     plant:      { x: 94, y: 85, label: "Plant" },
     archie_desk:{ x: 55, y: 60, label: "Archie Desk" },
+    sage_desk:  { x: 25, y: 58, label: "Sage Desk" },
+  },
+  sage: {
+    desk:       { x: 25, y: 58, label: "Desk Sage (Researcher)" },
+    ceo:        { x: 50, y: 82, label: "CEO Desk" },
+    coffee:     { x: 92, y: 15, label: "Coffee Machine" },
+    whiteboard: { x: 55, y: 82, label: "Whiteboard" },
+    water:      { x: 8,  y: 15, label: "Water Cooler" },
+    atlas_desk: { x: 15, y: 58, label: "Atlas Desk" },
+    alice_desk: { x: 45, y: 60, label: "Alice Desk" },
   },
 };
 
@@ -65,4 +79,5 @@ export const HANDOFF_DESK_KEY: Record<string, string> = {
   atlas: "atlas_desk",
   luna: "luna_desk",
   nova: "nova_desk",
+  sage: "sage_desk",
 };

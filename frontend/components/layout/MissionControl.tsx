@@ -15,7 +15,7 @@ import { useTaskStore } from "@/store/taskStore";
 import { API_BASE_URL } from "@/lib/constants";
 
 /* ─── AGENT STATUS BADGE ─────────────────────────────── */
-function StatusBadge({ id }: { id: "alice" | "archie" | "atlas" | "luna" | "nova" }) {
+function StatusBadge({ id }: { id: "alice" | "archie" | "atlas" | "luna" | "nova" | "sage" | "sentinel" }) {
   const agentsStatus = useAgentStore((state) => state.agents);
   const agent = agentsStatus[Object.keys(agentsStatus).find(k => k.toLowerCase() === id) || ""];
   const config = AGENT_CONFIG[id];
@@ -164,6 +164,8 @@ export function MissionControl() {
           <StatusBadge id="archie" />
           <StatusBadge id="atlas" />
           <StatusBadge id="nova" />
+          <StatusBadge id="sentinel" />
+          <StatusBadge id="sage" />
           <StatusBadge id="luna" />
         </div>
 
