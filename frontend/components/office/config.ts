@@ -19,12 +19,12 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     whiteboard: { x: 55, y: 82, label: "Whiteboard" },
     books:      { x: 6,  y: 85, label: "Library" },
     atlas_desk: { x: 15, y: 58, label: "Atlas Desk" },
-    scribe_desk:{ x: 55, y: 60, label: "Scribe Desk" },
+    archie_desk:{ x: 55, y: 60, label: "Archie Desk" },
     luna_desk:  { x: 75, y: 58, label: "Luna Desk" },
     nova_desk:  { x: 85, y: 58, label: "Nova Desk" },
   },
-  scribe: {
-    desk:       { x: 55, y: 60, label: "Desk Scribe (Marketing)" },
+  archie: {
+    desk:       { x: 55, y: 60, label: "Desk Archie (Architect)" },
     ceo:        { x: 50, y: 82, label: "CEO Desk" },
     coffee:     { x: 92, y: 15, label: "Coffee Machine" },
     whiteboard: { x: 55, y: 82, label: "Whiteboard" },
@@ -37,6 +37,7 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     whiteboard: { x: 55, y: 82, label: "Whiteboard" },
     coffee:     { x: 92, y: 15, label: "Coffee Machine" },
     luna_desk:  { x: 75, y: 58, label: "Luna Desk" },
+    archie_desk:{ x: 55, y: 60, label: "Archie Desk" },
   },
   luna: {
     desk:       { x: 75, y: 58, label: "Desk Luna (QA)" },
@@ -45,6 +46,7 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     whiteboard: { x: 55, y: 82, label: "Whiteboard" },
     water:      { x: 8,  y: 15, label: "Water Cooler" },
     atlas_desk: { x: 15, y: 58, label: "Atlas Desk" },
+    archie_desk:{ x: 55, y: 60, label: "Archie Desk" },
   },
   nova: {
     desk:       { x: 85, y: 58, label: "Desk Nova (Creative)" },
@@ -52,22 +54,15 @@ export const WAYPOINTS: Record<string, Record<string, Waypoint>> = {
     coffee:     { x: 92, y: 15, label: "Coffee Machine" },
     whiteboard: { x: 55, y: 82, label: "Whiteboard" },
     plant:      { x: 94, y: 85, label: "Plant" },
+    archie_desk:{ x: 55, y: 60, label: "Archie Desk" },
   },
-  sentinel: {
-    desk:    { x: 15, y: 45, label: "Sentinel Workstation" },
-    server1: { x: 30, y: 40, label: "Server Row 1" },
-    server2: { x: 50, y: 40, label: "Server Row 2" },
-    server3: { x: 70, y: 40, label: "Server Row 3" },
-    switch:  { x: 90, y: 45, label: "Network Switch" },
-  }
 };
 
 /** Handoff target: maps agentId to its desk waypoint key in another agent's waypoints */
 export const HANDOFF_DESK_KEY: Record<string, string> = {
   alice: "desk",
-  scribe: "scribe_desk",
+  archie: "archie_desk",
   atlas: "atlas_desk",
   luna: "luna_desk",
   nova: "nova_desk",
-  sentinel: "desk",
 };

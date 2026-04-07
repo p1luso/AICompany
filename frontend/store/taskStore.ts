@@ -138,18 +138,20 @@ export const useTaskStore = create<TaskStore>((set) => ({
       const action = event.action;
 
       const processingActions = [
-        "iniciando", "planificando", "en_diseno", "in_progress", 
-        "testing", "validando_seguridad", "documentando_release", 
-        "moviendo_ticket_to_do", "trabajando", "revisando", 
-        "documentando", "validando"
+        "iniciando", "planificando", "en_diseno", "in_progress",
+        "testing", "validando_seguridad", "documentando_release",
+        "moviendo_ticket_to_do", "trabajando", "revisando",
+        "documentando", "validando", "coordinando"
       ];
       const issueId = event.metadata?.issue_id as string | undefined;
 
       if (processingActions.includes(action)) {
         newStatus = "processing";
       } else if (action === "completada" && !issueId) {
+        // Task-level completion (Alice's final event, no issue_id)
         newStatus = "completed";
-      } else if (action === "error") {
+      } else if (action === "error" && !issueId) {
+        // Task-level error
         newStatus = "failed";
       }
 
@@ -177,9 +179,22 @@ export const useTaskStore = create<TaskStore>((set) => ({
       // Manejar actualización de un Issue específico
       if (event.metadata?.issue_id) {
         const issueId = event.metadata.issue_id as string;
-        const issueStatus = (event.metadata.issue_status as SubTask["status"]) || "processing";
-        
-        updatedTask.issues = (updatedTask.issues || []).map((i) => 
+
+        // Determinar status del issue según el evento:
+        // - Si metadata tiene issue_status explícito, usarlo
+        // - Si action es "completada" → "completed"
+        // - Si action es "error" → "failed"
+        // - Default → "processing"
+        let issueStatus: SubTask["status"] = "processing";
+        if (event.metadata.issue_status) {
+          issueStatus = event.metadata.issue_status as SubTask["status"];
+        } else if (action === "completada") {
+          issueStatus = "completed";
+        } else if (action === "error") {
+          issueStatus = "failed";
+        }
+
+        updatedTask.issues = (updatedTask.issues || []).map((i) =>
           i.id === issueId
             ? { ...i, status: issueStatus, assignedAgent: event.agent }
             : i

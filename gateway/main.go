@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -101,11 +102,32 @@ func (h *WSHub) clientCount() int {
 
 // ─── Variables globales ─────────────────────────────────────
 
+// AgentState mantiene el estado actual de un agente para el office tracking
+type AgentState struct {
+	ID           string `json:"id"`
+	State        string `json:"state"`
+	LastModified int64  `json:"lastModified"`
+	LastFile     string `json:"lastFile"`
+}
+
 var (
 	redisManager *RedisManager
 	hub          *WSHub
 	config       *Config
+	agentStates  map[string]*AgentState
+	statesLogMu  sync.RWMutex
 )
+
+func initAgentStates() {
+	agentStates = make(map[string]*AgentState)
+	ids := []string{"alice", "archie", "atlas", "nova", "luna"}
+	for _, id := range ids {
+		agentStates[id] = &AgentState{
+			ID:    id,
+			State: "idle",
+		}
+	}
+}
 
 // ─── Main ───────────────────────────────────────────────────
 
@@ -121,6 +143,9 @@ func main() {
 		log.Fatalf("❌ No se pudo conectar a Redis: %v", err)
 	}
 	defer redisManager.Close()
+
+	// Inicializar estados de agentes
+	initAgentStates()
 
 	// Inicializar WebSocket Hub
 	hub = newWSHub()
@@ -166,6 +191,10 @@ func setupRoutes(app *fiber.App) {
 	app.Post("/api/task", createTask)
 	app.Get("/api/task/:id", getTask)
 	app.Get("/api/tasks", listTasks)
+	app.Get("/api/projects/:slug/download", downloadProject)
+
+	// API Agents — Gestión de estado de oficina
+	app.Get("/api/agents", getAgents)
 
 	// WebSocket — upgrade middleware + handler
 	app.Use("/ws", func(c *fiber.Ctx) error {
@@ -232,15 +261,20 @@ func subscribeToRedisEvents() {
 		if event.TaskID != "" {
 			var newStatus string
 			switch event.Action {
-			case "iniciando", "planificando", "trabajando", "revisando", "documentando", "validando":
+			case "iniciando", "planificando", "trabajando", "revisando",
+				"documentando", "validando", "coordinando":
 				newStatus = "processing"
 			case "completada":
-				// Solo marcar completed si es el Manager quien dice "completada" (final)
-				if event.Agent == "Manager" {
+				// Solo marcar task-level completion cuando NO es un issue individual
+				issueID, _ := event.Metadata["issue_id"].(string)
+				if issueID == "" && (event.Agent == "Alice" || event.Agent == "Manager") {
 					newStatus = "completed"
 				}
 			case "error":
-				newStatus = "failed"
+				issueID, _ := event.Metadata["issue_id"].(string)
+				if issueID == "" {
+					newStatus = "failed"
+				}
 			}
 			if newStatus != "" {
 				if err := redisManager.UpdateTaskStatus(event.TaskID, newStatus); err != nil {
@@ -248,6 +282,26 @@ func subscribeToRedisEvents() {
 				}
 			}
 		}
+
+		// Actualizar el estado en memoria para el tracking de la oficina
+		agentID := strings.ToLower(event.Agent)
+		statesLogMu.Lock()
+		if state, ok := agentStates[agentID]; ok {
+			switch event.Action {
+			case "completada", "error", "idle":
+				state.State = "idle"
+			case "coordinando":
+				// Alice coordina pero no trabaja directamente
+				state.State = "active"
+			default:
+				state.State = "active"
+			}
+			state.LastModified = time.Now().Unix()
+			if file, ok := event.Metadata["file"].(string); ok {
+				state.LastFile = file
+			}
+		}
+		statesLogMu.Unlock()
 
 		// Serializar evento a JSON
 		data, err := json.Marshal(event)
@@ -277,6 +331,24 @@ func healthCheck(c *fiber.Ctx) error {
 		"timestamp":         time.Now().Format(time.RFC3339),
 		"redis_connected":   redisConnected,
 		"websocket_clients": hub.clientCount(),
+	})
+}
+
+func getAgents(c *fiber.Ctx) error {
+	statesLogMu.RLock()
+	defer statesLogMu.RUnlock()
+
+	result := make([]*AgentState, 0, len(agentStates))
+	// Lista ordenada para el frontend
+	ids := []string{"alice", "archie", "atlas", "nova", "luna"}
+	for _, id := range ids {
+		if s, ok := agentStates[id]; ok {
+			result = append(result, s)
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"agents": result,
 	})
 }
 
@@ -400,6 +472,35 @@ func listTasks(c *fiber.Ctx) error {
 		"count": len(tasks),
 		"tasks": tasks,
 	})
+}
+
+func downloadProject(c *fiber.Ctx) error {
+	slug := c.Params("slug")
+	url := fmt.Sprintf("%s/api/projects/%s/download", config.AIWorkerURL, slug)
+
+	log.Printf("📦 Gateway proxying download for project: %s", slug)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		log.Printf("❌ Error conectando a AI Worker para download: %v", err)
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"error": "AI Worker unavailable",
+		})
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return c.Status(resp.StatusCode).Send(body)
+	}
+
+	// Copiar headers necesarios
+	c.Set("Content-Type", resp.Header.Get("Content-Type"))
+	c.Set("Content-Disposition", resp.Header.Get("Content-Disposition"))
+
+	// Stream del cuerpo de la respuesta
+	return c.SendStream(resp.Body)
 }
 
 func testEvent(c *fiber.Ctx) error {

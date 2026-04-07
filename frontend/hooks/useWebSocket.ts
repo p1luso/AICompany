@@ -60,10 +60,11 @@ export function useWebSocket({
           if (data.agent) {
             const { updateAgent } = useAgentStore.getState();
             const activeActions = [
-              "iniciando", "planificando", "en_diseno", "in_progress", 
-              "testing", "validando_seguridad", "documentando_release", 
-              "moviendo_ticket_to_do", "trabajando", "revisando", 
-              "documentando", "validando", "executing", "auditando"
+              "iniciando", "planificando", "en_diseno", "in_progress",
+              "testing", "validando_seguridad", "documentando_release",
+              "moviendo_ticket_to_do", "trabajando", "revisando",
+              "documentando", "validando", "executing", "auditando",
+              "coordinando"
             ];
             const idleActions = ["completada", "idle", "error"];
 

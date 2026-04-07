@@ -16,8 +16,7 @@ interface AgentStore {
 
 const INITIAL_AGENTS: Record<string, Agent> = {
   alice:    { id: "alice",    status: "IDLE", lastSeen: Date.now() },
-  scribe:   { id: "scribe",   status: "IDLE", lastSeen: Date.now() },
-  sentinel: { id: "sentinel", status: "IDLE", lastSeen: Date.now() },
+  archie:   { id: "archie",   status: "IDLE", lastSeen: Date.now() },
   atlas:    { id: "atlas",    status: "IDLE", lastSeen: Date.now() },
   luna:     { id: "luna",     status: "IDLE", lastSeen: Date.now() },
   nova:     { id: "nova",     status: "IDLE", lastSeen: Date.now() },
@@ -34,15 +33,8 @@ export const useAgentStore = create<AgentStore>((set) => ({
       const updatedAgents = { ...state.agents };
       const now = Date.now();
 
-      // If becoming ACTIVE, set all others to IDLE first
-      if (status === "ACTIVE") {
-        Object.keys(updatedAgents).forEach((agentId) => {
-          updatedAgents[agentId] = {
-            ...updatedAgents[agentId],
-            status: "IDLE",
-          };
-        });
-      }
+      // PARALLEL EXECUTION: Múltiples agentes pueden estar ACTIVE simultáneamente.
+      // Ya NO forzamos IDLE a los demás cuando uno se activa.
 
       updatedAgents[normalizedId] = {
         ...updatedAgents[normalizedId],

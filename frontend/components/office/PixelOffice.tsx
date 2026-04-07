@@ -2,7 +2,7 @@
 
 import { AgentStatus } from "@/hooks/useAgentTracker";
 import { Agent } from "./Agent";
-import { Desk, ConferenceTable, ReportIcon, Bookcase, ServerRack, Plant, CoffeeMachine, WaterCooler, Window, Whiteboard, WallClock, CeoDesk, FilingCabinet, Printer } from "./Furniture";
+import { Desk, ConferenceTable, ReportIcon, Bookcase, ServerRack, Plant, CoffeeMachine, WaterCooler, Window, Whiteboard, WallClock, CeoDesk, FilingCabinet, Printer, OfficeRug, DeskPhone, TrashBin, CoatRack, NoticeBoard } from "./Furniture";
 
 interface PixelOfficeProps {
   agents: AgentStatus[];
@@ -14,13 +14,12 @@ interface PixelOfficeProps {
 
 export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKanban, onOpenDeskModal }: PixelOfficeProps) {
   const alice    = agents.find((a) => a.id === "alice");
-  const scribe   = agents.find((a) => a.id === "scribe");
-  const sentinel = agents.find((a) => a.id === "sentinel");
+  const archie   = agents.find((a) => a.id === "archie");
   const atlas    = agents.find((a) => a.id === "atlas");
   const luna     = agents.find((a) => a.id === "luna");
   const nova     = agents.find((a) => a.id === "nova");
 
-  const reportVisible = scribe?.state === "active" || (scribe?.lastModified !== null);
+  const reportVisible = !!(alice?.lastModified || archie?.lastModified);
 
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: "#0a0a1a" }}>
@@ -107,24 +106,24 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
               <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">DEV & QA</div>
             </div>
 
-            {/* CLUSTER 2 (Center - MGMT: Alice + Scribe) */}
+            {/* CLUSTER 2 (Center - HQ: Alice + Archie) */}
             <div className="absolute flex gap-4" style={{ left: "38%", bottom: "42%" }}>
               <div className="desk-slot group" onClick={() => onOpenDeskModal?.("alice")} title="Escritorio de Alice">
                 <Desk color="#6D4C41" />
                 <div className="desk-label" style={{ color: "#4fc3f7" }}>ALICE</div>
               </div>
-              <div className="desk-slot group" onClick={() => onOpenDeskModal?.("scribe")} title="Escritorio de Scribe">
+              <div className="desk-slot group" onClick={() => onOpenDeskModal?.("archie")} title="Escritorio de Archie">
                 <Desk color="#6D4C41" />
-                <div className="desk-label" style={{ color: "#81c784" }}>SCRIBE</div>
+                <div className="desk-label" style={{ color: "#818cf8" }}>ARCHIE</div>
               </div>
-              <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">HQ & COMMS</div>
+              <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">HQ & ARCHITECTURE</div>
             </div>
 
-            {/* CLUSTER 3 (Right - CREATIVE: Nova + Sentinel workstation) */}
+            {/* CLUSTER 3 (Right - CREATIVE: Nova) */}
             <div className="absolute flex gap-4" style={{ left: "72%", bottom: "38%" }}>
               <div className="desk-slot group" onClick={() => onOpenDeskModal?.("nova")} title="Escritorio de Nova">
                 <Desk />
-                <div className="desk-label" style={{ color: "#E91E63" }}>NOVA</div>
+                <div className="desk-label" style={{ color: "#ec4899" }}>NOVA</div>
               </div>
               <div className="absolute -top-5 left-0 w-full text-[5px] font-pixel text-[#8B6914] text-center tracking-wider">CREATIVE</div>
             </div>
@@ -137,9 +136,18 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
             <div className="absolute bottom-3 right-[25%]"><Printer /></div>
             <div className="absolute bottom-16 right-2"><Plant /></div>
 
+            {/* ── NEW DECORATIONS ──── */}
+            <div className="absolute bottom-[20%] left-[45%] opacity-60 pointer-events-none"><OfficeRug /></div>
+            <div className="absolute top-1 left-[40%]"><NoticeBoard /></div>
+            <div className="absolute bottom-2 left-[18%]"><TrashBin /></div>
+            <div className="absolute bottom-2 right-[38%]"><TrashBin /></div>
+            <div className="absolute top-9 left-2"><CoatRack /></div>
+            <div className="absolute bottom-10 left-[50%]"><Plant /></div>
+            <div className="absolute bottom-4 left-[60%]"><DeskPhone /></div>
+
             {/* ── AGENTS ──── */}
             <Agent id="alice"    state={alice?.state ?? "idle"} />
-            <Agent id="scribe"   state={scribe?.state ?? "idle"} />
+            <Agent id="archie"   state={archie?.state ?? "idle"} />
             <Agent id="atlas"    state={atlas?.state ?? "idle"} />
             <Agent id="luna"     state={luna?.state ?? "idle"} />
             <Agent id="nova"     state={nova?.state ?? "idle"} />
@@ -151,11 +159,19 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
             style={{ border: "4px solid #4fc3f7" }}
           >
             <div className="absolute top-0 left-0 right-0 h-4 bg-[#0288D1]" />
-            <div className="flex flex-col items-center pt-10 gap-12">
+            {/* Room label */}
+            <div className="absolute top-5 left-1/2 -translate-x-1/2 font-pixel text-[5px] text-[#0288D1] opacity-60 tracking-widest">
+              MEETING ROOM
+            </div>
+            <div className="flex flex-col items-center pt-14 gap-8">
               <div className="scale-90"><ConferenceTable /></div>
               <ReportIcon visible={reportVisible} />
-              <div className="mt-auto pb-4 scale-110"><Plant /></div>
+              {/* Whiteboard in meeting room */}
+              <div className="scale-75 opacity-70"><Whiteboard /></div>
             </div>
+            {/* Corner plants */}
+            <div className="absolute bottom-2 left-2 scale-75"><Plant /></div>
+            <div className="absolute bottom-2 right-2 scale-75"><Plant /></div>
           </div>
         </div>
 
@@ -183,7 +199,7 @@ export function PixelOffice({ agents, onOpenTerminal, onOpenTaskModal, onOpenKan
           </div>
 
           <div className="absolute inset-0 pointer-events-none overflow-visible">
-            <Agent id="sentinel" state={sentinel?.state ?? "idle"} />
+            {/* El Datacenter ahora es autónomo */}
           </div>
 
           {/* Cables and Grills */}

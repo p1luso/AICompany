@@ -30,11 +30,11 @@ services:
       - LOG_LEVEL=info
       # Ollama corre en el host macOS → host.docker.internal
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - MODEL_MANAGER=llama3.2
-      - MODEL_SCRIBE=mistral
-      - MODEL_QA=llama3.2
-      - MODEL_DEV=qwen2.5-coder
-      - MODEL_TESTER=qwen2.5-coder
+      - MODEL_MANAGER=ollama/llama3.2:latest
+      - MODEL_COPY=ollama/mistral:latest
+      - MODEL_QA=openai/gpt-4o-mini
+      - MODEL_DEV=ollama/qwen2.5-coder:latest
+      - MODEL_TESTER=ollama/qwen2.5-coder:latest
       # Ruta donde los agentes escriben outputs .md
       - MEMORY_OUTPUT_PATH=/memory
     depends_on:

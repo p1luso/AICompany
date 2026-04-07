@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 export type AgentState = "idle" | "active" | "walking";
 
 export interface AgentStatus {
-  id: "alice" | "scribe" | "sentinel" | "atlas" | "luna" | "nova";
+  id: "alice" | "archie" | "atlas" | "luna" | "nova";
   state: AgentState;
   lastModified: number | null;
   lastFile: string | null;
@@ -17,8 +17,7 @@ const POLL_INTERVAL = 10_000; // 10 seconds
 
 const DEFAULT_AGENTS: AgentStatus[] = [
   { id: "alice",    state: "idle", lastModified: null, lastFile: null, justChanged: false },
-  { id: "scribe",   state: "idle", lastModified: null, lastFile: null, justChanged: false },
-  { id: "sentinel", state: "idle", lastModified: null, lastFile: null, justChanged: false },
+  { id: "archie",   state: "idle", lastModified: null, lastFile: null, justChanged: false },
   { id: "atlas",    state: "idle", lastModified: null, lastFile: null, justChanged: false },
   { id: "luna",     state: "idle", lastModified: null, lastFile: null, justChanged: false },
   { id: "nova",     state: "idle", lastModified: null, lastFile: null, justChanged: false },

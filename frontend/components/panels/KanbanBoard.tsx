@@ -5,7 +5,20 @@ import { useTaskStore } from "@/store/taskStore";
 import { StoredTask, AgentEvent, TaskRequest, SubTask } from "@/types";
 import { useAgentStore } from "@/store/agentStore";
 import { AGENT_CONFIG } from "../office/Agent";
-import { X } from "lucide-react";
+import { X, Download } from "lucide-react";
+
+/** Helper to match the backend slug naming logic */
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+};
 
 interface KanbanBoardProps {
   onClose: () => void;
@@ -30,6 +43,13 @@ interface WorkItem {
 export function KanbanBoard({ onClose }: KanbanBoardProps) {
   const { tasks } = useTaskStore();
   
+  const handleDownload = (e: React.MouseEvent, title: string) => {
+    e.stopPropagation();
+    const slug = slugify(title);
+    const url = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/projects/${slug}/download`;
+    window.open(url, "_blank");
+  };
+
   const taskList = Object.values(tasks);
 
   const columns = [
@@ -145,9 +165,20 @@ export function KanbanBoard({ onClose }: KanbanBoardProps) {
                             <div className="font-pixel text-[7px] text-black uppercase font-bold leading-tight flex-1 pr-1 break-words">
                               {item.displayTitle}
                             </div>
-                            {item.priority === "high" && (
-                              <div className="px-0.5 bg-red-500 text-white font-pixel text-[4px] animate-pulse">HIGH</div>
-                            )}
+                            <div className="flex flex-col items-end gap-1">
+                              {item.priority === "high" && (
+                                <div className="px-0.5 bg-red-500 text-white font-pixel text-[4px] animate-pulse">HIGH</div>
+                              )}
+                              {item.status === "completed" && (
+                                <button 
+                                  onClick={(e) => handleDownload(e, item.displayTitle)}
+                                  className="p-1 bg-[#000080] text-white rounded-sm hover:brightness-125 transition-all shadow-[1px_1px_0_#000]"
+                                  title="Download project ZIP"
+                                >
+                                  <Download size={8} />
+                                </button>
+                              )}
+                            </div>
                           </div>
                           
                           <div className="flex items-center gap-2 mt-1 py-1 border-t border-gray-50 bg-gray-50/50 rounded px-1">

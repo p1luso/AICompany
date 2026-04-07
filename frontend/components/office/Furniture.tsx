@@ -367,3 +367,102 @@ export function WaterCooler() {
     </svg>
   );
 }
+
+/* ─── OFFICE RUG (decorative floor mat) ────── */
+export function OfficeRug() {
+  return (
+    <svg viewBox="0 0 40 20" width={180} height={90} style={{ imageRendering: "pixelated" }}>
+      {/* Outer border */}
+      <rect x="0" y="0" width="40" height="20" fill="#5D2E8C" opacity="0.3" />
+      {/* Inner pattern */}
+      <rect x="2" y="2" width="36" height="16" fill="#7B1FA2" opacity="0.2" />
+      {/* Center diamond */}
+      <rect x="16" y="6" width="8" height="8" fill="#AB47BC" opacity="0.2" transform="rotate(45, 20, 10)" />
+      {/* Corner details */}
+      <rect x="3" y="3" width="3" height="3" fill="#CE93D8" opacity="0.15" />
+      <rect x="34" y="3" width="3" height="3" fill="#CE93D8" opacity="0.15" />
+      <rect x="3" y="14" width="3" height="3" fill="#CE93D8" opacity="0.15" />
+      <rect x="34" y="14" width="3" height="3" fill="#CE93D8" opacity="0.15" />
+    </svg>
+  );
+}
+
+/* ─── PHONE (desk phone) ────────────────── */
+export function DeskPhone() {
+  return (
+    <svg viewBox="0 0 8 10" width={32} height={40} style={{ imageRendering: "pixelated" }}>
+      {/* Base */}
+      <rect x="0" y="4" width="8" height="6" fill="#333" />
+      <rect x="0" y="4" width="8" height="1" fill="#444" />
+      {/* Number pad */}
+      {[0,1,2].map(r => [0,1,2].map(c => (
+        <rect key={`${r}${c}`} x={2+c*2} y={6+r*1} width="1" height="0.5" fill="#666" />
+      )))}
+      {/* Handset */}
+      <rect x="0" y="0" width="8" height="3" fill="#222" />
+      <rect x="0" y="0" width="2" height="3" fill="#2a2a2a" />
+      <rect x="6" y="0" width="2" height="3" fill="#2a2a2a" />
+      {/* Screen */}
+      <rect x="2" y="5" width="4" height="1" fill="#39ff14" opacity="0.5" />
+    </svg>
+  );
+}
+
+/* ─── TRASH BIN ──────────────────────────── */
+export function TrashBin() {
+  return (
+    <svg viewBox="0 0 6 8" width={24} height={32} style={{ imageRendering: "pixelated" }}>
+      <rect x="0" y="1" width="6" height="7" fill="#616161" />
+      <rect x="0" y="1" width="6" height="1" fill="#757575" />
+      {/* Rim */}
+      <rect x="-1" y="0" width="8" height="1" fill="#9E9E9E" />
+      {/* Crumpled paper */}
+      <rect x="1" y="2" width="2" height="2" fill="#E0E0E0" />
+      <rect x="3" y="3" width="2" height="1" fill="#F5F5F5" />
+    </svg>
+  );
+}
+
+/* ─── COAT RACK ──────────────────────────── */
+export function CoatRack() {
+  return (
+    <svg viewBox="0 0 8 16" width={32} height={64} style={{ imageRendering: "pixelated" }}>
+      {/* Pole */}
+      <rect x="3" y="4" width="2" height="12" fill="#5D4037" />
+      {/* Top */}
+      <rect x="2" y="3" width="4" height="1" fill="#4E342E" />
+      {/* Hooks */}
+      <rect x="0" y="4" width="3" height="1" fill="#424242" />
+      <rect x="5" y="4" width="3" height="1" fill="#424242" />
+      {/* Coat hanging */}
+      <rect x="0" y="5" width="3" height="4" fill="#1565C0" opacity="0.6" />
+      {/* Base */}
+      <rect x="1" y="15" width="6" height="1" fill="#4E342E" />
+    </svg>
+  );
+}
+
+/* ─── NOTICE BOARD (bulletin board) ──────── */
+export function NoticeBoard() {
+  return (
+    <svg viewBox="0 0 16 12" width={64} height={48} style={{ imageRendering: "pixelated" }}>
+      {/* Cork board */}
+      <rect x="0" y="0" width="16" height="12" fill="#8D6E63" />
+      <rect x="0" y="0" width="16" height="1" fill="#6D4C41" />
+      {/* Pinned notes */}
+      <rect x="1" y="2" width="4" height="3" fill="#FFF176" />
+      <rect x="2" y="1" width="1" height="1" fill="#E53935" />
+      <rect x="6" y="1" width="5" height="4" fill="#81D4FA" />
+      <rect x="8" y="1" width="1" height="1" fill="#1565C0" />
+      <rect x="2" y="6" width="6" height="3" fill="#C8E6C9" />
+      <rect x="4" y="6" width="1" height="1" fill="#2E7D32" />
+      <rect x="10" y="6" width="4" height="4" fill="#FFCCBC" />
+      <rect x="11" y="6" width="1" height="1" fill="#FF5722" />
+      {/* Text lines on notes */}
+      <rect x="2" y="3" width="2" height="0.5" fill="#999" />
+      <rect x="7" y="3" width="3" height="0.5" fill="#999" />
+      <rect x="3" y="7" width="4" height="0.5" fill="#999" />
+      <rect x="11" y="8" width="2" height="0.5" fill="#999" />
+    </svg>
+  );
+}

@@ -10,17 +10,11 @@ export const AGENT_CONFIGS: Record<string, AgentConfig> = {
     bgColor: "#4fc3f710",
     avatar: "🔍",
   },
-  Scribe: {
-    name: "Scribe",
-    color: "#81c784",
-    bgColor: "#81c78410",
-    avatar: "✍️",
-  },
-  Sentinel: {
-    name: "Sentinel",
-    color: "#ef5350",
-    bgColor: "#ef535010",
-    avatar: "🛡️",
+  Archie: {
+    name: "Archie (Architect)",
+    color: "#818cf8",
+    bgColor: "#818cf810",
+    avatar: "📐",
   },
   Atlas: {
     name: "Atlas",

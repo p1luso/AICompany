@@ -104,7 +104,7 @@ async def create_task(
 
     # Publicar evento inicial
     event_publisher.publish_event(
-        agent="Manager",
+        agent="Alice",
         action="recibida",
         message=f"Nueva tarea recibida: {request.title}",
         task_id=task_id,
@@ -176,10 +176,13 @@ def execute_crew_task(
             priority=priority,
         )
 
-        # Cierre final
-        update_task_in_store(task_id, {"status": "completed", "result": str(result)})
-
-        logger.info(f"✅ Tarea completada: {task_id}")
+        # Cierre final - Verificar si hubo fallo interno
+        final_status = "completed"
+        if isinstance(result, dict) and result.get("status") == "failed":
+            final_status = "failed"
+            
+        update_task_in_store(task_id, {"status": final_status, "result": str(result)})
+        logger.info(f"🏁 Tarea finalizada ({final_status}): {task_id}")
 
     except Exception as e:
         logger.error(f"❌ Error en ejecute_crew_task: {e}")
@@ -244,6 +247,11 @@ async def test_event(event: AgentEvent) -> dict:
     }
 
 
+import shutil
+import zipfile
+from pathlib import Path
+from fastapi.responses import FileResponse
+
 @app.get("/")
 async def root() -> dict:
     """Endpoint raíz"""
@@ -256,9 +264,42 @@ async def root() -> dict:
             "create_task": "POST /api/task",
             "get_task": "GET /api/task/{task_id}",
             "list_tasks": "GET /api/tasks",
+            "download_project": "GET /api/projects/{slug}/download",
             "test_event": "POST /api/test-event",
         },
     }
+
+@app.get("/api/projects/{slug}/download")
+async def download_project(slug: str):
+    """
+    Empaqueta un proyecto en un .zip y lo devuelve para descargar.
+    """
+    project_path = Path(settings.PROJECT_ROOT) / slug
+    
+    if not project_path.exists():
+        raise HTTPException(status_code=404, detail=f"Proyecto '{slug}' no encontrado")
+
+    # Crear directorio temporal para zips si no existe
+    zip_dir = Path("/tmp/zips")
+    zip_dir.mkdir(parents=True, exist_ok=True)
+    
+    zip_filename = f"{slug}.zip"
+    zip_path = zip_dir / zip_filename
+    
+    logger.info(f"📦 Empaquetando proyecto {slug} en {zip_path}")
+    
+    try:
+        # Usar shutil para crear el archive
+        shutil.make_archive(str(zip_path).replace(".zip", ""), 'zip', project_path)
+        
+        return FileResponse(
+            path=zip_path,
+            filename=zip_filename,
+            media_type='application/zip'
+        )
+    except Exception as e:
+        logger.error(f"❌ Error al crear zip: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al empaquetar: {str(e)}")
 
 
 if __name__ == "__main__":
