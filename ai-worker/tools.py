@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 
 from crewai.tools import tool
+from duckduckgo_search import DDGS
 
 
 # ─── ENVIRONMENT INFO (injected into tool descriptions) ───────
@@ -19,11 +20,11 @@ from crewai.tools import tool
 
 ENV_RULES = """
 ENTORNO DEL CONTAINER:
-- Node.js v20, npm 10. NO hay TypeScript global instalado.
+- Node.js v20, Python 3.11, Go 1.21.
 - Directorio de proyectos: /memory/projects/<nombre>/
-- Para npm/npx: SIEMPRE '--yes' o '-y' para evitar prompts.
-- NUNCA uses 'echo' para crear archivos. Usa 'File Writer'.
-- Si un comando falla, LEE el error, CORRIGE, y REINTENTA.
+- Para instaladores: SIEMPRE '--yes', '-y' o flags silenciosos.
+- NUNCA uses 'echo' para crear archivos de código. Usa 'File Writer'.
+- Si necesitas investigar un error nuevo, usa 'Web Search Tool'.
 """
 
 
@@ -756,3 +757,27 @@ def directory_lister(directory_path: str) -> str:
         return "\n".join(result) or "Carpeta vacía."
     except Exception as e:
         return f"ERROR: No se pudo listar {directory_path}: {e}"
+
+
+@tool("Web Search Tool")
+def web_search_tool(query: str) -> str:
+    """
+    Busca información técnica en tiempo real en internet (DuckDuckGo).
+    Úsala para investigar librerías, errores de compilación, o mejores prácticas
+    en cualquier lenguaje (Python, Go, Node, etc.).
+
+    Args:
+        query: El término de búsqueda técnica.
+    """
+    try:
+        results = []
+        with DDGS() as ddgs:
+            for r in ddgs.text(query, max_results=5):
+                results.append(f"Título: {r['title']}\nSnippet: {r['body']}\nURL: {r['href']}\n---")
+        
+        if not results:
+            return "No se encontraron resultados para la búsqueda."
+            
+        return "\n".join(results)
+    except Exception as e:
+        return f"ERROR de red/búsqueda: {e}"

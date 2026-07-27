@@ -7,3 +7,4 @@ python-dotenv
 requests
 httpx
 python-json-logger
+duckduckgo-search
